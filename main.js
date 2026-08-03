@@ -102,7 +102,7 @@ const STRINGS = {
     ribbonVocab: 'Open vocabulary list',
     ribbonPage: 'Translate page / Restore',
     // Settings headings
-    settingsTitle: 'Mouse Tooltip Translator',
+    settingsTitle: 'WordLens',
     secFeatures: 'Features',
     secDesktop: 'Desktop',
     secMobile: 'Mobile',
@@ -252,7 +252,7 @@ const STRINGS = {
     ribbonPage: '翻译页面 / 恢复',
     ribbonTrans: '打开翻译面板',
     // Settings headings
-    settingsTitle: 'Mouse Tooltip Translator',
+    settingsTitle: 'WordLens 词镜',
     secFeatures: '功能开关',
     secDesktop: '桌面端',
     secMobile: '移动端',
@@ -313,15 +313,15 @@ const STRINGS = {
     baiduSecretKeyDesc: '用于请求签名，请妥善保管。',
     baiduKeyMissing: '百度翻译 API Key 未配置，请在设置中填写。',
     secTencent: '腾讯云机器翻译（翻译君）',
-    tencentSecretId: 'SecretId',
+    tencentSecretId: 'SecretId（密钥 ID）',
     tencentSecretIdDesc: '在腾讯云 CAM 控制台获取。有免费额度。',
-    tencentSecretKey: 'SecretKey',
+    tencentSecretKey: 'SecretKey（密钥 Key）',
     tencentSecretKeyDesc: '用于请求签名，请妥善保管。',
     tencentKeyMissing: '腾讯云翻译 API Key 未配置，请在设置中填写。',
     secAliyun: '阿里云机器翻译',
-    aliyunAccessKeyId: 'AccessKey ID',
+    aliyunAccessKeyId: 'AccessKey ID（访问密钥 ID）',
     aliyunAccessKeyIdDesc: '在阿里云 RAM 控制台获取。有免费额度。',
-    aliyunAccessKeySecret: 'AccessKey Secret',
+    aliyunAccessKeySecret: 'AccessKey Secret（访问密钥 Secret）',
     aliyunAccessKeySecretDesc: '用于请求签名，请妥善保管。',
     aliyunKeyMissing: '阿里云翻译 API Key 未配置，请在设置中填写。',
     // Per-feature settings
@@ -964,9 +964,9 @@ const ENGINE_CLASSES = {
 };
 
 const ENGINE_LABELS = {
-  google: 'Google',
-  googleGTX: 'Google (translate_a/t)',
-  bing: 'Bing (experimental)',
+  google: 'Google（谷歌）',
+  googleGTX: 'Google (translate_a/t，免密钥)',
+  bing: 'Bing（必应）',
   youdao: '有道智云 (Youdao)',
   baidu: '百度翻译 (Baidu)',
   tencent: '腾讯云翻译 (Tencent TMT)',
@@ -1924,22 +1924,22 @@ module.exports = class MouseTooltipPlugin extends Plugin {
 
     this.addCommand({
       id: 'mtt-open-trans-panel',
-      name: 'Open translation panel',
+      name: '打开翻译面板',
       callback: () => this.openTransView(),
     });
     this.addCommand({
       id: 'mtt-open-vocab',
-      name: 'Open vocabulary list',
+      name: '打开生词本',
       callback: () => this.openVocabView(),
     });
     this.addCommand({
       id: 'mtt-hide-tooltip',
-      name: 'Hide tooltip',
+      name: '隐藏翻译弹窗',
       callback: () => this.tooltip.hide(),
     });
     this.addCommand({
       id: 'mtt-toggle-enabled',
-      name: 'Toggle translator on/off',
+      name: '开/关翻译器',
       callback: async () => {
         this.settings.enabled = !this.settings.enabled;
         await this.saveSettings();
@@ -1949,22 +1949,22 @@ module.exports = class MouseTooltipPlugin extends Plugin {
     });
     this.addCommand({
       id: 'mtt-translate-selection',
-      name: 'Translate current selection',
+      name: '翻译当前划选内容',
       callback: () => this.translateSelection(),
     });
     this.addCommand({
       id: 'mtt-translate-page',
-      name: 'Translate current page',
+      name: '翻译当前页面',
       callback: () => this.pageTranslator.translatePage(),
     });
     this.addCommand({
       id: 'mtt-restore-page',
-      name: 'Restore original text (page translation)',
+      name: '还原原文（页面翻译）',
       callback: () => this.pageTranslator.restorePage(),
     });
     this.addCommand({
       id: 'mtt-copy-translation',
-      name: 'Copy translation to clipboard',
+      name: '复制译文到剪贴板',
       callback: async () => {
         const result = this.tooltip.lastResult;
         const s = i18n();
