@@ -1,0 +1,12 @@
+# Backup / local artifacts
+*.bak*
+*.orig
+*~
+.DS_Store
+Thumbs.db
+
+# Node (not used by this plugin, kept for future tooling)
+node_modules/
+
+# Local editor artifacts
+.obsidian/
