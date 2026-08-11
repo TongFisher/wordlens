@@ -33,6 +33,7 @@ const DEFAULT_SETTINGS = {
   showMultiTranslation: true,       // 显示全部同义译法
   showTransliteration: true,        // 显示音标/注音
   showMorphology: true,             // 显示词根词缀拆解
+  showMorphFallback: true,          // 有道无词根时用内置规则拆解兜底
   enabled: true,                    // 总开关
   restrictToNoteContent: true,      // 仅在笔记正文内响应
   activeMode: 'both',               // edit | reading | both
@@ -153,7 +154,9 @@ const I18N = {
     showMultiTranslationDesc: '词典接口免费，不消耗翻译 API 额度。',
     showTransliteration: '显示音标',
     showMorphology: '显示词根词缀',
-    showMorphologyDesc: '对单词拆解前缀/词根/后缀并附含义（有道词根优先，内置规则兜底）。',
+    showMorphologyDesc: '对单词拆解前缀/词根/后缀并附含义。',
+    showMorphFallback: '内置规则拆解兜底',
+    showMorphFallbackDesc: '有道词典没有词根词缀时，用内置词缀表规则拆解（前缀/词根/后缀+含义）。关闭后仅显示有道词根。',
     pageHoverOriginal: '悬停显示原文',
     pageHoverOriginalDesc: '悬停在已翻译段落上时，显示该段翻译前的原文。',
     resetBtn: '恢复默认设置',
@@ -259,7 +262,9 @@ const I18N = {
     showMultiTranslationDesc: 'Free dictionary API, no translation quota consumed.',
     showTransliteration: 'Show phonetics',
     showMorphology: 'Show morphology',
-    showMorphologyDesc: 'Break down words into prefix/root/suffix with meanings (Youdao roots preferred, built-in rules as fallback).',
+    showMorphologyDesc: 'Break down words into prefix/root/suffix with meanings.',
+    showMorphFallback: 'Built-in rules fallback',
+    showMorphFallbackDesc: 'When Youdao has no morphology, use the built-in affix table (prefix/root/suffix + meaning). Off = Youdao roots only.',
     pageHoverOriginal: 'Hover shows original',
     pageHoverOriginalDesc: 'Hovering a translated paragraph shows its original text.',
     resetBtn: 'Reset to defaults',
@@ -945,12 +950,12 @@ class Popup {
       }
       if (dictEl.childNodes.length) el.appendChild(dictEl);
     }
-    // 4.5 词根词缀拆解（有道词根优先，内置规则拆解兜底）
+    // 4.5 词根词缀拆解（有道词根优先；内置规则拆解为可选兜底）
     if (this.plugin.settings.showMorphology && /^[a-zA-Z]/.test(sourceText) && sourceText.split(/\s+/).length <= 2) {
       let morphText = '';
       if (dict && dict.morph) {
         morphText = dict.morph;
-      } else {
+      } else if (this.plugin.settings.showMorphFallback) {
         const m = analyzeMorph(sourceText);
         if (m) {
           morphText = m.parts.map((p) => {
@@ -1500,6 +1505,9 @@ class WordLensSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName(s.showMorphology).setDesc(s.showMorphologyDesc)
       .addToggle((t) => t.setValue(this.plugin.settings.showMorphology)
         .onChange(async (v) => { this.plugin.settings.showMorphology = v; await this.plugin.saveSettings(); }));
+    new Setting(containerEl).setName(s.showMorphFallback).setDesc(s.showMorphFallbackDesc)
+      .addToggle((t) => t.setValue(this.plugin.settings.showMorphFallback)
+        .onChange(async (v) => { this.plugin.settings.showMorphFallback = v; await this.plugin.saveSettings(); }));
 
     /* —— 整页翻译 —— */
     containerEl.createEl('h3', { text: s.secPage });
