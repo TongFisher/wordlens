@@ -28,8 +28,8 @@ WordLens 是完全独立开发的 Obsidian 插件：界面全中文、配置简�
 
 ⚙️ **怎么装（两种姿势）**
 
-1. **手动装**：去 [Releases](https://github.com/546335130/wordlens/releases) 下载 `main.js`、`manifest.json`、`styles.css` 三个文件，丢进 `<你的笔记库>/.obsidian/plugins/wordlens/`（没有就新建），重启 Obsidian 后在「设置 → 第三方插件」启用即可。
-2. **BRAT 装**：懒得动手就用 [BRAT](https://github.com/TfTHacker/obsidian42-brat) 添加 `546335130/wordlens` 为 Beta 插件源，一键搞定 📌。
+1. **手动装**：去 [Releases](https://github.com/TongFisher/wordlens/releases) 下载 `main.js`、`manifest.json`、`styles.css` 三个文件，丢进 `<你的笔记库>/.obsidian/plugins/wordlens/`（没有就新建），重启 Obsidian 后在「设置 → 第三方插件」启用即可。
+2. **BRAT 装**：懒得动手就用 [BRAT](https://github.com/TfTHacker/obsidian42-brat) 添加 `TongFisher/wordlens` 为 Beta 插件源，一键搞定 📌。
 
 🛠️ **怎么用 & 配置**
 
@@ -77,10 +77,10 @@ WordLens is an independent implementation, released under the MIT License.
 
 ### Installation
 
-1. Download `main.js`, `manifest.json`, and `styles.css` from the [Releases](https://github.com/546335130/wordlens/releases) page
+1. Download `main.js`, `manifest.json`, and `styles.css` from the [Releases](https://github.com/TongFisher/wordlens/releases) page
 2. Place them in `<your vault>/.obsidian/plugins/wordlens/` (create the folder if needed)
 3. Reload Obsidian and enable **WordLens** under Settings → Community plugins
-4. (Optional) Install via [BRAT](https://github.com/TfTHacker/obsidian42-brat) by adding `546335130/wordlens` as a Beta plugin source
+4. (Optional) Install via [BRAT](https://github.com/TfTHacker/obsidian42-brat) by adding `TongFisher/wordlens` as a Beta plugin source
 
 ### Usage
 

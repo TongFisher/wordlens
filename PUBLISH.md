@@ -9,7 +9,7 @@
 
 ## 第 0 步（已代填）：作者信息
 
-本项目 `manifest.json` 的 `"author"` 已设为 GitHub 用户名 `546335130`（即你 `ssh -T git@github.com` 返回的账号）。发布前确认它和你的 GitHub 登录名一致即可，无需再改。若以后换号，直接改这一行并重新提交：
+本项目 `manifest.json` 的 `"author"` 已设为 GitHub 用户名 `TongFisher`（即你 `ssh -T git@github.com` 返回的账号）。发布前确认它和你的 GitHub 登录名一致即可，无需再改。若以后换号，直接改这一行并重新提交：
 
 ```bash
 git add manifest.json
@@ -26,18 +26,18 @@ git commit -m "chore: set author"
 4. 其余默认（Public），点 **Create repository**。
 5. 创建后页面会显示仓库地址，复制 **HTTPS** 那一行，形如：
    ```
-   https://github.com/546335130/wordlens.git
+   https://github.com/TongFisher/wordlens.git
    ```
 
 ---
 
 ## 第 2 步：本地连接并推送
 
-在自己电脑的终端进入项目目录并执行（仓库地址已自动填好 `546335130/wordlens`）：
+在自己电脑的终端进入项目目录并执行（仓库地址已自动填好 `TongFisher/wordlens`）：
 
 ```bash
 cd D:\wordlens
-git remote add origin https://github.com/546335130/wordlens.git
+git remote add origin https://github.com/TongFisher/wordlens.git
 git push -u origin main
 ```
 
@@ -53,11 +53,11 @@ GitHub 早已不支持账号密码登录，二选一：
 
 **方式 B：SSH（配一次永久免密，推荐长期使用）**
 > 你已经在本机执行过 `ssh-keygen` 并成功通过 `ssh -T git@github.com` 认证，直接用此方式即可，无需 PAT。
-- 本机生成密钥：`ssh-keygen -t ed25519 -C "546335130"`，一路回车。
+- 本机生成密钥：`ssh-keygen -t ed25519 -C "TongFisher"`，一路回车。
 - 把公钥内容（`cat ~/.ssh/id_ed25519.pub`）复制到 GitHub → Settings → **SSH and GPG keys** → New SSH key。
 - 然后把远程地址换成 SSH 形式：
   ```bash
-  git remote set-url origin git@github.com:546335130/wordlens.git
+  git remote set-url origin git@github.com:TongFisher/wordlens.git
   git push -u origin main
   ```
 
@@ -86,9 +86,9 @@ Obsidian 社区商店依赖 GitHub Release 来分发 `main.js` / `manifest.json`
 {
   "id": "wordlens",
   "name": "WordLens 词镜",
-  "author": "546335130",
+  "author": "TongFisher",
   "description": "划词即译的 Obsidian 翻译与词典插件：悬停 / 划词翻译、一词多译、双向智能方向，支持有道智云、百度、腾讯云、阿里云、Bing、Google 七种翻译源。",
-  "repo": "546335130/wordlens"
+  "repo": "TongFisher/wordlens"
 }
 ```
 
@@ -101,7 +101,7 @@ Obsidian 社区商店依赖 GitHub Release 来分发 `main.js` / `manifest.json`
 
 不想等审核，自己或朋友想先用：
 
-- **BRAT（推荐）**：在 Obsidian 装社区插件 **Beta Reviewer's Auto-update Tool**，添加你的仓库 `546335130/wordlens`，即可一键安装并自动更新。
+- **BRAT（推荐）**：在 Obsidian 装社区插件 **Beta Reviewer's Auto-update Tool**，添加你的仓库 `TongFisher/wordlens`，即可一键安装并自动更新。
 - **手动安装**：下载仓库的 `main.js`、`manifest.json`、`styles.css` 三个文件，放进 `.obsidian/plugins/wordlens/` 目录，重启 Obsidian 后在第三方插件里启用。
 
 ---
