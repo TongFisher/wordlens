@@ -1,32 +1,43 @@
 # WordLens 词镜
 
-划词即译的 Obsidian 翻译与词典插件。在 Obsidian 中**划选文字**或**鼠标悬停**，即刻弹出翻译弹窗——支持单词多义词词典、短语释义、中文↔外文智能双向翻译、发音与一键复制。
+> **语言 / Language：** [简体中文](#简体中文) | [English](#english)
 
-## 功能特性
+---
 
-- ✍️ **悬停翻译 & 划词翻译**：悬停取词、划选整句，弹窗跟随光标
-- 📖 **一词多译（免费词典）**：
-  - 中文词 → 多个英文译词（如「评估 → assess / evaluation / estimate」）
-  - 英文词 → 词性分组的全部释义（如 `bank` → n. 银行；河岸… / v. 存入银行…）+ 美式/英式音标
-  - 英文短语 → 核心释义列表（如 `take off` → 脱下；起飞；脱离…）
-- 🔄 **双向智能方向**：划中文自动翻译为外文（默认英文），划其他语言自动翻译为中文
-- 🔊 **发音 & 复制**：弹窗内一键朗读原文、复制译文
-- 📄 **整页翻译**：阅读视图一键翻译整个文档（可逐段还原原文）
-- 🗂️ **生词本 & 翻译面板**：自动收集查询记录，支持筛选、排序、复制
-- 🌐 **七种翻译源**：有道智云、百度翻译、腾讯云翻译、阿里云翻译、Bing、Google、Google GTX
-- 🀄 **中文界面**：设置界面完整汉化，也可切换英文
+## 简体中文
 
-## 安装
+**老哥们镇楼！** 今天给大伙盘一款我最近真香到不行的神器——**WordLens 词镜**。
 
-### 手动安装（推荐体验方式）
+说人话：它是 Obsidian 的一款划词翻译插件，你划一下、悬一下，译文"啪"就弹出来了，跟沙拉查词那味儿一模一样，而且**专门为咱们中文用户调教过**。
 
-1. 下载 `main.js`、`manifest.json`、`styles.css` 三个文件
-2. 放入你的笔记库：`.obsidian/plugins/wordlens/` 目录（没有就新建）
-3. 重启 Obsidian，在「设置 → 第三方插件」中启用 **WordLens 词镜**
+### 🔥 凭啥说它与众不同？划重点了啊
 
-## 翻译引擎配置
+- **一词多译，白嫖党的胜利**：查个「评估」，它直接给你甩出 `assess / evaluation / estimate / measure`…… 不是给一个意思，是**一堆**。关键是——这套词典走有道免费接口，**不！耗！你！一！分！API 额度**！白嫖怪狂喜。
+- **双向智能，傻瓜式体验**：你划中文，它自动翻外文（默认英文）；你划英文，它自动翻中文。不用切来切去选语言，脑子不用动。
+- **七路翻译源随便挑**：有道智云、百度、腾讯云、阿里云、Bing、Google、Google GTX。Bing 和有道**免密钥开箱即用**，墙内直连不翻车。
+- **整页翻译**：一整篇文档一键全翻，还能逐段还原，长文突击必备。
+- **生词本 + 发音 + 一键复制**：查过的词自动收，听发音、抄译文，丝滑。
+- **全中文界面**：设置给你整得明明白白，小白也能秒上手。
 
-在插件设置 → 「引擎设置」中选择引擎，并填入对应平台的密钥（仅在选中该引擎时显示配置项）。
+> 说实话，原版 Mouse Tooltip Translator 我也用过，但那英文界面 + 单引擎真不够爽。WordLens 是在它基础上**二次开发**的：加了汉化、一词多译词典、七引擎、双向智能，原作者 toki1703 的版权声明我们也原样保留，MIT 协议开源免费。
+
+**兄弟们，这波属于闭眼入的宝藏。笔记党、文献党、考研党，别犹豫了，盘它！**
+
+### 怎么装（手把手）
+
+1. 去 [Releases](https://github.com/546335130/wordlens/releases) 页下载 `main.js`、`manifest.json`、`styles.css` 三个文件
+2. 丢进你的库：`<你的笔记库>/.obsidian/plugins/wordlens/`（没有就新建）
+3. 重启 Obsidian → 设置 → 第三方插件 → 启用 **WordLens**
+4. （进阶）想偷懒也能用 [BRAT](https://github.com/TfTHacker/obsidian42-brat) 装：添加 `546335130/wordlens` 为 Beta 插件源
+
+### 怎么用
+
+- 在笔记正文里**划一段** / **鼠标悬个词** → 翻译弹窗就来了
+- 设置里挑引擎、填密钥（只用哪个填哪个，没填的不耗额度）
+- 划中文不弹框？检查「跳过同语言翻译」开关（设置 → 翻译设置）
+- 整页翻译消耗云端 API 额度，注意用量；划词翻译消耗极小
+
+### 翻译引擎配置
 
 | 引擎 | 需要的密钥 | 免费额度 | 特点 |
 |---|---|---|---|
@@ -39,27 +50,57 @@
 
 > 词典（一词多译、音标、短语释义）来自有道词典的免费接口，**不消耗任何翻译 API 额度**。
 
-### 各平台开通指引（快速）
-
-- **有道智云**：ai.youdao.com 注册 → 控制台创建应用（接入方式选「API」）→ 开通「文本翻译」→ 复制应用 ID 与应用密钥
-- **百度翻译**：fanyi-api.baidu.com 注册 → 开通「通用文本翻译」→ 获取 App ID 与密钥（标准版免费额度）
-- **腾讯云**：cloud.tencent.com 注册 → 搜索「机器翻译 TMT」开通 → 访问管理 CAM 创建 API 密钥（SecretId/SecretKey）
-- **阿里云**：alibabacloud.com 注册 → 开通「机器翻译」→ RAM 控制台创建 AccessKey（建议只授予机器翻译权限）
-
-## 使用提示
-
-- 划词翻译默认只在**笔记正文**内生效，可在设置中关闭「仅限笔记内容」
-- 划中文不弹框？检查「跳过同语言翻译」开关（设置 → 翻译设置）
-- 整页翻译消耗云端 API 额度，注意用量；划词翻译消耗极小
-
-## 开发
-
-```
-插件为无构建依赖的纯 JS 插件，直接编辑 main.js 后重新加载即可。
-```
-
-## 致谢与许可证
+### 致谢与许可证
 
 本项目基于 **Mouse Tooltip Translator for Obsidian**（作者：ときくん / toki1703，[GitHub](https://github.com/toki1703/mouse-tooltip-translator)）二次开发，在其 MIT 许可下进行了引擎扩展、界面汉化、词典增强与交互改进，并保留原作者版权声明。
 
 本项目采用 **MIT License**，详见 [LICENSE](LICENSE)。
+
+---
+
+## English
+
+**WordLens** is a hover / select-to-translate plugin for Obsidian. Select or hover any text in your notes and a translation popup appears instantly — like a built-in Saladict. It is tuned specifically for Chinese-speaking users.
+
+### Features
+
+- **Hover & select translation** with a cursor-following popup
+- **Multi-translation (free dictionary)**: one word → many senses with phonetics. Powered by Youdao's free dictionary API, so it **consumes zero translation API quota**
+- **Bidirectional smart mode**: Chinese → foreign language, foreign → Chinese, auto-detected — no manual language switching
+- **7 translation sources**: Youdao, Baidu, Tencent Cloud, Alibaba Cloud, Bing, Google, Google GTX. Bing and Youdao work **out of the box with no API key**
+- **Full-page translation** with per-paragraph restore
+- **Wordbook, TTS pronunciation, one-click copy**
+- **Full Chinese UI** (switchable to English)
+
+WordLens is a derivative work of **Mouse Tooltip Translator for Obsidian** by toki1703 ([GitHub](https://github.com/toki1703/mouse-tooltip-translator)), extended with a Chinese UI, a multi-translation dictionary, 7 engines, and bidirectional smart mode, under the original MIT license with attribution preserved.
+
+### Installation
+
+1. Download `main.js`, `manifest.json`, and `styles.css` from the [Releases](https://github.com/546335130/wordlens/releases) page
+2. Place them in `<your vault>/.obsidian/plugins/wordlens/` (create the folder if needed)
+3. Reload Obsidian and enable **WordLens** under Settings → Community plugins
+4. (Optional) Install via [BRAT](https://github.com/TfTHacker/obsidian42-brat) by adding `546335130/wordlens` as a Beta plugin source
+
+### Usage
+
+- Select or hover text inside a note to open the translation popup
+- Pick an engine and enter its API key in settings (only the engine you use consumes quota)
+- Translating Chinese shows nothing? Check the "Skip same-language translation" toggle under Translation settings
+- Full-page translation consumes cloud API quota; select-to-translate uses very little
+
+### Engine setup
+
+| Engine | Key required | Free tier | Notes |
+|---|---|---|---|
+| Youdao | App ID + App Key | Trial credit | Includes multi-translation dictionary (recommended) |
+| Baidu | App ID + Key | ~50k chars/month | Stable, China-friendly |
+| Tencent Cloud | SecretId + SecretKey | Free tier | Machine Translation TMT |
+| Alibaba Cloud | AccessKey ID + Secret | Free tier | Machine Translation |
+| Bing | None | Free | Works out of the box |
+| Google / Google GTX | None | Free | Requires Google access (overseas) |
+
+> The dictionary (multi-translation, phonetics, phrase glosses) comes from Youdao's free API and **uses no translation API quota**.
+
+### Credits & License
+
+Based on **Mouse Tooltip Translator for Obsidian** by toki1703 ([GitHub](https://github.com/toki1703/mouse-tooltip-translator)), MIT licensed. WordLens extends it with a Chinese UI, multi-translation dictionary, 7 engines, and bidirectional smart mode, preserving the original copyright notice. Released under the **MIT License** — see [LICENSE](LICENSE).

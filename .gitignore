@@ -10,3 +10,6 @@ node_modules/
 
 # Local editor artifacts
 .obsidian/
+
+# Build output: main.js is distributed as a GitHub Release asset, not committed
+main.js

@@ -341,7 +341,7 @@
 }
 
 .mtt-page-btn.is-active {
-  color: var(--interactive-accent) !important;
+  color: var(--interactive-accent);
 }
 
 /* ── Page-translation hover: original text preview ──────────── */
