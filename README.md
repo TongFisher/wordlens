@@ -10,7 +10,7 @@
 
 如果你也在用 Obsidian 记笔记，大概率撞上过这个场景：读外文资料，看到个词想立刻知道意思，又懒得切出去开翻译软件。WordLens 词镜就是解决这个的——划一下、悬一下，译文直接跟在光标旁边弹出来，沙拉查词那味儿，懂的都懂 😎。
 
-它脱胎于 Mouse Tooltip Translator，我们在原版基础上做了**全面汉化 + 功能增强**，专门给中文用户调过。
+WordLens 是完全独立开发的 Obsidian 插件：界面全中文、配置简单、划词弹窗交互顺手，专门给中文用户调过。
 
 ✨ **为什么值得装**
 
@@ -24,7 +24,7 @@
 
 ⭐ **全中文界面**：设置项明明白白，第一次用也能秒上手。
 
-> 说句实在的，原版单引擎 + 英文界面真不够爽。WordLens 是在 MIT 协议下二次开发的：加了汉化、一词多译词典、七引擎、双向智能，原作者 toki1703 的版权声明我们也原样保留。
+> 说句实在的，做它的初衷很简单：市面上的翻译插件要么英文界面、要么单引擎，中文用户用着不够爽。所以自己造了一个——全中文、多引擎、带免费词典，开箱即用。
 
 ⚙️ **怎么装（两种姿势）**
 
@@ -51,9 +51,9 @@
 
 > 一词多译、音标、短语释义来自有道免费词典接口，**不消耗任何翻译 API 额度**。
 
-📌 **致谢与许可证**
+📌 **许可证**
 
-基于 **Mouse Tooltip Translator**（作者 toki1703，[GitHub](https://github.com/toki1703/mouse-tooltip-translator)）二次开发，在 MIT 许可下扩展引擎、汉化界面、增强词典与交互，保留原作者版权声明。本项目同样采用 **MIT License**，免费使用 👏。
+WordLens 是完全独立开发的插件，采用 **MIT License** 开源，免费使用，欢迎提 Issue 和 PR 👏。
 
 🙌 开源免费，用得顺手就是最好的反馈，Star 不求多 🎉。
 
@@ -73,7 +73,7 @@
 - **Wordbook, TTS pronunciation, one-click copy**
 - **Full Chinese UI** (switchable to English)
 
-WordLens is a derivative work of **Mouse Tooltip Translator for Obsidian** by toki1703 ([GitHub](https://github.com/toki1703/mouse-tooltip-translator)), extended with a Chinese UI, a multi-translation dictionary, 7 engines, and bidirectional smart mode, under the original MIT license with attribution preserved.
+WordLens is an independent implementation, released under the MIT License.
 
 ### Installation
 
@@ -102,6 +102,6 @@ WordLens is a derivative work of **Mouse Tooltip Translator for Obsidian** by to
 
 > The dictionary (multi-translation, phonetics, phrase glosses) comes from Youdao's free API and **uses no translation API quota**.
 
-### Credits & License
+### License
 
-Based on **Mouse Tooltip Translator for Obsidian** by toki1703 ([GitHub](https://github.com/toki1703/mouse-tooltip-translator)), MIT licensed. WordLens extends it with a Chinese UI, multi-translation dictionary, 7 engines, and bidirectional smart mode, preserving the original copyright notice. Released under the **MIT License** — see [LICENSE](LICENSE).
+WordLens is an independent Obsidian plugin released under the **MIT License** — see [LICENSE](LICENSE).

@@ -1,556 +1,227 @@
-.mtt-tooltip {
+/* WordLens 词镜 — 弹窗与视图样式（独立实现） */
+
+/* ===== 翻译弹窗 ===== */
+.wordlens-popup {
   position: fixed;
   z-index: 9999;
-  max-width: 460px;
-  padding: 8px 12px;
-  background: var(--background-secondary, #2b2b2b);
-  color: var(--text-normal, #eeeeee);
-  border: 1px solid var(--background-modifier-border, #444444);
-  border-radius: 8px;
-  font-size: 0.9em;
-  line-height: 1.5;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.28);
-  pointer-events: auto;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  font-family: var(--font-text, system-ui, sans-serif);
-  animation: mtt-pop 0.12s ease-out;
+  max-width: 440px;
+  min-width: 220px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
+  font-size: 14px;
+  line-height: 1.55;
+  user-select: text;
 }
 
-@keyframes mtt-pop {
-  from { opacity: 0; transform: translateY(3px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* ── Saladict-style tooltip extras ────────────────────────── */
-.mtt-tooltip .mtt-toolbar {
-  display: flex;
-  justify-content: flex-end;
-  gap: 2px;
-  margin: -4px -6px 2px 0;
-}
-
-.mtt-toolbar-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 12px;
-  line-height: 1;
-  padding: 3px 5px;
-  border-radius: 4px;
-  color: var(--text-muted);
-  opacity: 0.85;
-  transition: opacity 0.1s, background 0.1s;
-}
-.mtt-toolbar-btn:hover {
-  background: var(--background-modifier-hover);
-  color: var(--text-normal);
-  opacity: 1;
-}
-
-.mtt-tooltip .mtt-headword {
-  font-size: 1.18em;
-  font-weight: 650;
-  color: var(--text-normal);
-  margin: 0 0 5px;
-  line-height: 1.3;
-  word-break: break-word;
-}
-
-.mtt-tooltip .mtt-loading {
-  color: var(--text-faint);
-  letter-spacing: 3px;
-  text-align: center;
-  padding: 3px 10px;
-}
-
-.mtt-tooltip .mtt-target {
-  color: var(--text-normal, #eeeeee);
-}
-
-.mtt-tooltip .mtt-source {
-  margin-top: 4px;
-  padding-top: 4px;
-  border-top: 1px dashed var(--background-modifier-border, #444444);
-  color: var(--text-muted, #aaaaaa);
-  font-size: 0.88em;
-}
-
-.mtt-tooltip .mtt-meta {
-  margin-top: 4px;
-  color: var(--text-faint, #888888);
-  font-size: 0.78em;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.mtt-tooltip .mtt-dict {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  margin-top: 2px;
-}
-
-.mtt-tooltip .mtt-dict-row {
-  line-height: 1.45;
-}
-
-.mtt-tooltip .mtt-pos {
-  display: inline-block;
-  color: var(--text-accent, #7aa2f7);
-  font-weight: 600;
-  margin-right: 4px;
-}
-
-.mtt-tooltip .mtt-terms {
-  color: var(--text-normal, #eeeeee);
-}
-
-.mtt-tooltip .mtt-translit {
-  margin-top: 4px;
-  color: var(--text-muted, #aaaaaa);
-  font-style: italic;
-  font-size: 0.88em;
-}
-
-/* ── Vocabulary view ─────────────────────────────────────── */
-.mtt-vocab-root {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-}
-
-.mtt-vocab-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--background-modifier-border);
-}
-
-.mtt-vocab-title {
-  flex: 1;
-  font-weight: 600;
-  font-size: 1em;
-}
-
-.mtt-vocab-reload {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-muted);
-  font-size: 1.1em;
-  padding: 2px 5px;
-  border-radius: 4px;
-  line-height: 1;
-}
-.mtt-vocab-reload:hover {
-  color: var(--text-normal);
-  background: var(--background-modifier-hover);
-}
-
-.mtt-vocab-controls {
+.wordlens-popup-head {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 12px;
-  border-bottom: 1px solid var(--background-modifier-border);
-  flex-wrap: wrap;
+  margin-bottom: 6px;
 }
 
-.mtt-vocab-sort {
-  background: var(--background-secondary);
-  border: 1px solid var(--background-modifier-border);
-  color: var(--text-normal);
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 0.82em;
-  cursor: pointer;
-}
-
-.mtt-vocab-filter-wrap {
-  display: flex;
-  gap: 4px;
-}
-
-.mtt-vocab-filter-btn {
-  background: none;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 4px;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: 0.8em;
-  padding: 2px 9px;
-}
-.mtt-vocab-filter-btn.is-active {
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-  border-color: var(--interactive-accent);
-}
-.mtt-vocab-filter-btn:hover:not(.is-active) {
-  background: var(--background-modifier-hover);
-  color: var(--text-normal);
-}
-
-.mtt-vocab-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 4px 0;
-}
-
-.mtt-vocab-card {
-  padding: 5px 12px;
-  border-bottom: 1px solid var(--background-modifier-border-hover);
-}
-.mtt-vocab-card:hover {
-  background: var(--background-modifier-hover);
-}
-
-.mtt-vocab-main {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-.mtt-vocab-source {
+.wordlens-popup-src {
   font-weight: 600;
   color: var(--text-normal);
+  word-break: break-all;
 }
 
-.mtt-vocab-sep {
-  color: var(--text-faint);
-  font-size: 0.85em;
-}
-
-.mtt-vocab-target {
-  color: var(--text-accent);
-  flex: 1;
-}
-
-.mtt-vocab-count {
-  color: var(--text-faint);
-  font-size: 0.78em;
-  white-space: nowrap;
-}
-
-.mtt-vocab-copy {
-  margin-left: auto;
-  padding: 1px 7px;
-  font-size: 0.75em;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 4px;
-  background: var(--background-secondary);
-  color: var(--text-muted);
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.15s;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.mtt-vocab-card:hover .mtt-vocab-copy {
-  opacity: 1;
-}
-.mtt-vocab-copy:hover {
-  background: var(--interactive-hover);
-  color: var(--text-normal);
-}
-
-.mtt-vocab-pos-wrap {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 2px;
-}
-
-.mtt-vocab-pos-entry {
-  font-size: 0.8em;
-  color: var(--text-muted);
-}
-
-.mtt-vocab-pos-label {
-  color: var(--text-accent-hover, var(--text-accent));
-}
-
-.mtt-vocab-empty {
-  padding: 20px 12px;
-  color: var(--text-muted);
-  text-align: center;
-  font-size: 0.9em;
-}
-
-/* ── Page Translation ────────────────────────────────────────── */
-.mtt-page-progress {
-  position: fixed;
-  /* default fallback position — overridden by JS to sit below the view header */
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10000;
-  background: var(--background-secondary);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 8px;
-  padding: 8px 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.85em;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-  color: var(--text-normal);
-  min-width: 260px;
-  pointer-events: auto;
-}
-
-.mtt-page-progress-label {
+.wordlens-popup-lang {
   flex: none;
-  white-space: nowrap;
-}
-
-.mtt-page-progress-bar-wrap {
-  flex: 1;
-  height: 4px;
-  background: var(--background-modifier-border);
-  border-radius: 2px;
-  overflow: hidden;
-  min-width: 80px;
-}
-
-.mtt-page-progress-bar {
-  height: 100%;
-  background: var(--interactive-accent);
-  border-radius: 2px;
-  transition: width 0.15s ease;
-}
-
-.mtt-page-progress-cancel {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-muted);
-  font-size: 1em;
-  padding: 2px 4px;
-  border-radius: 4px;
-  line-height: 1;
-  flex: none;
-}
-
-.mtt-page-progress-cancel:hover {
-  color: var(--text-normal);
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 999px;
   background: var(--background-modifier-hover);
-}
-
-.mtt-page-btn.is-active {
-  color: var(--interactive-accent);
-}
-
-/* ── Page-translation hover: original text preview ──────────── */
-.mtt-tooltip .mtt-orig-label {
-  font-size: 0.78em;
-  color: var(--text-faint, #888888);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 3px;
-}
-
-.mtt-tooltip .mtt-orig-sep {
-  border-top: 1px dashed var(--background-modifier-border, #444444);
-  margin-bottom: 5px;
-}
-
-.mtt-tooltip .mtt-orig-preview {
-  color: var(--text-muted, #aaaaaa);
-  font-size: 0.9em;
-}
-
-/* ── Translation Panel ───────────────────────────────────────── */
-.mtt-trans-root {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-  font-family: var(--font-text, system-ui, sans-serif);
-}
-
-/* Language selector bar */
-.mtt-trans-lang-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--background-modifier-border);
-  background: var(--background-secondary);
-  flex-shrink: 0;
-}
-
-.mtt-trans-lang-select {
-  flex: 1;
-  min-width: 0;
-  background: var(--background-primary);
-  border: 1px solid var(--background-modifier-border);
-  color: var(--text-normal);
-  border-radius: 6px;
-  padding: 4px 6px;
-  font-size: 0.82em;
-  cursor: pointer;
-}
-.mtt-trans-lang-select:focus {
-  outline: 2px solid var(--interactive-accent);
-  outline-offset: 1px;
-}
-
-.mtt-trans-swap {
-  background: none;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 6px;
   color: var(--text-muted);
-  cursor: pointer;
-  font-size: 1em;
-  padding: 3px 7px;
-  flex-shrink: 0;
-  line-height: 1;
-  transition: background 0.1s, color 0.1s;
 }
-.mtt-trans-swap:hover {
-  background: var(--background-modifier-hover);
+
+.wordlens-popup-target {
+  font-size: 15px;
   color: var(--text-normal);
-}
-
-/* Source textarea */
-.mtt-trans-input-wrap {
-  position: relative;
-  flex-shrink: 0;
-  border-bottom: 1px solid var(--background-modifier-border);
-}
-
-.mtt-trans-input {
-  width: 100%;
-  min-height: 110px;
-  max-height: 200px;
-  resize: vertical;
-  box-sizing: border-box;
-  padding: 10px 32px 10px 12px;
-  background: var(--background-primary);
-  color: var(--text-normal);
-  border: none;
-  outline: none;
-  font-size: 0.95em;
-  font-family: inherit;
-  line-height: 1.6;
-}
-.mtt-trans-input::placeholder {
-  color: var(--text-faint);
-}
-
-.mtt-trans-clear-btn {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  background: none;
-  border: none;
-  color: var(--text-faint);
-  cursor: pointer;
-  font-size: 0.8em;
-  padding: 3px 5px;
-  border-radius: 4px;
-  line-height: 1;
-}
-.mtt-trans-clear-btn:hover {
-  color: var(--text-muted);
-  background: var(--background-modifier-hover);
-}
-
-/* Result area */
-.mtt-trans-result {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px;
-  min-height: 80px;
-  background: var(--background-secondary);
-  color: var(--text-normal);
-  font-size: 1em;
-  line-height: 1.6;
   word-break: break-word;
 }
 
-.mtt-trans-target-text {
-  font-size: 1.05em;
-  font-weight: 500;
-  color: var(--text-normal);
-}
-
-.mtt-trans-loading {
+.wordlens-popup-phonetic {
+  font-size: 12.5px;
   color: var(--text-faint);
-  font-style: italic;
+  margin-bottom: 2px;
 }
 
-.mtt-trans-error {
-  color: var(--text-error, #e06c75);
-  font-size: 0.9em;
+.wordlens-popup-dict {
+  margin-top: 8px;
+  border-top: 1px dashed var(--background-modifier-border);
+  padding-top: 8px;
+  max-height: 220px;
+  overflow-y: auto;
 }
 
-.mtt-trans-empty {
-  color: var(--text-faint);
-  font-style: italic;
-  font-size: 0.9em;
-}
-
-.mtt-trans-dict {
+.wordlens-popup-dict-row {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  gap: 8px;
+  padding: 2px 0;
+  align-items: baseline;
 }
 
-.mtt-trans-dict-row {
-  line-height: 1.5;
-  font-size: 0.95em;
-}
-
-.mtt-trans-pos {
+.wordlens-popup-pos {
+  flex: none;
+  min-width: 44px;
+  font-style: italic;
+  font-size: 12px;
   color: var(--text-accent);
-  font-weight: 600;
 }
 
-.mtt-trans-terms {
+.wordlens-popup-meaning {
+  font-size: 13.5px;
   color: var(--text-normal);
+  word-break: break-word;
 }
 
-.mtt-trans-translit {
-  margin-top: 6px;
-  color: var(--text-muted);
-  font-style: italic;
-  font-size: 0.88em;
-}
-
-/* Footer */
-.mtt-trans-footer {
+.wordlens-popup-bar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 10px;
-  border-top: 1px solid var(--background-modifier-border);
-  background: var(--background-secondary);
-  flex-shrink: 0;
+  gap: 8px;
+  margin-top: 10px;
 }
 
-.mtt-trans-meta {
-  color: var(--text-faint);
-  font-size: 0.75em;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.mtt-trans-copy {
+.wordlens-popup-btn {
+  font-size: 12px;
   padding: 3px 12px;
-  font-size: 0.8em;
+  border-radius: 6px;
+  background: var(--background-modifier-hover);
   border: 1px solid var(--background-modifier-border);
-  border-radius: 5px;
-  background: var(--background-primary);
   color: var(--text-muted);
   cursor: pointer;
 }
-.mtt-trans-copy:hover {
+
+.wordlens-popup-btn:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+.wordlens-popup-orig {
+  color: var(--text-muted);
+  word-break: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* ===== 整页翻译段落标记 ===== */
+.wl-paged {
+  color: var(--text-normal);
+}
+
+/* ===== 生词本视图 ===== */
+.wordlens-vocab-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.wordlens-vocab-clear,
+.wordlens-vocab-copy {
+  font-size: 12px;
+  padding: 3px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-modifier-hover);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.wordlens-vocab-clear:hover,
+.wordlens-vocab-copy:hover {
+  color: var(--text-normal);
+}
+
+.wordlens-vocab-empty {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.wordlens-vocab-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.wordlens-vocab-left {
+  min-width: 0;
+  flex: 1;
+}
+
+.wordlens-vocab-word {
+  font-weight: 600;
+  color: var(--text-normal);
+  word-break: break-all;
+}
+
+.wordlens-vocab-target {
+  font-size: 13px;
+  color: var(--text-muted);
+  word-break: break-word;
+}
+
+.wordlens-vocab-right {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wordlens-vocab-count {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+/* ===== 翻译面板视图 ===== */
+.wordlens-trans-input {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+  resize: vertical;
+}
+
+.wordlens-trans-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.wordlens-trans-go {
+  padding: 6px 18px;
+  border-radius: 6px;
+  border: none;
   background: var(--interactive-accent);
   color: var(--text-on-accent);
-  border-color: var(--interactive-accent);
+  cursor: pointer;
+}
+
+.wordlens-trans-out {
+  margin-top: 4px;
+}
+
+.wordlens-trans-result {
+  font-size: 15px;
+  color: var(--text-normal);
+  word-break: break-word;
+  margin-bottom: 10px;
+  white-space: pre-wrap;
+}
+
+.wordlens-trans-copy {
+  font-size: 12px;
+  padding: 3px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-modifier-hover);
+  color: var(--text-muted);
+  cursor: pointer;
 }
