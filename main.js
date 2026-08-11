@@ -32,7 +32,8 @@ const DEFAULT_SETTINGS = {
   showDictionary: true,             // 显示词典（一词多译）
   showMultiTranslation: true,       // 显示全部同义译法
   showTransliteration: true,        // 显示音标/注音
-  showMorphology: true,             // 显示词根词缀（有道词典词根）
+  showMorphology: true,             // 显示词根词缀（有道词根+内置规则兜底）
+  wordNotePath: '',                 // 单词笔记文件路径（相对库根；空 = 单词本.md）
   enabled: true,                    // 总开关
   restrictToNoteContent: true,      // 仅在笔记正文内响应
   activeMode: 'both',               // edit | reading | both
@@ -64,6 +65,11 @@ const I18N = {
     copyTranslation: '复制译文',
     speak: '朗读原文',
     morphTitle: '词根词缀',
+    saveWord: '存入单词本',
+    saveWordDone: (word, file) => `已存入单词本：${word} → ${file}`,
+    saveWordFailed: '存入单词本失败：',
+    wordNotePath: '单词本文件路径',
+    wordNotePathDesc: '点击弹窗中的 📌 按钮，把查到的词追加到这个 md 文件（相对库根路径，如 英语/单词本.md；留空默认 单词本.md）。',
     vocabTitle: '生词本',
     vocabEmpty: '还没有翻译记录',
     vocabReload: '刷新',
@@ -170,6 +176,11 @@ const I18N = {
     copyTranslation: 'Copy translation',
     speak: 'Speak source text',
     morphTitle: 'Morphology',
+    saveWord: 'Save to word note',
+    saveWordDone: (word, file) => `Saved to word note: ${word} → ${file}`,
+    saveWordFailed: 'Failed to save word note: ',
+    wordNotePath: 'Word note file path',
+    wordNotePathDesc: 'Click the 📌 button in the popup to append the word to this md file (vault-relative path, e.g. English/wordbook.md; empty = wordbook.md).',
     vocabTitle: 'Vocabulary',
     vocabEmpty: 'No translation history yet',
     vocabReload: 'Reload',
@@ -893,8 +904,17 @@ class Popup {
         new Notice(s.copied);
       } catch (_) {}
     });
+    const btnSave = document.createElement('button');
+    btnSave.className = 'wordlens-popup-btn wordlens-save-btn';
+    btnSave.textContent = '📌';
+    btnSave.title = s.saveWord;
+    btnSave.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.plugin.saveWordToNote(sourceText, result.targetText);
+    });
     bar.appendChild(btnSpeak);
     bar.appendChild(btnCopy);
+    bar.appendChild(btnSave);
     el.appendChild(bar);
     // 2. 词头（大号原文）
     if (this.plugin.settings.showSourceText) {
@@ -1231,6 +1251,26 @@ class WordLensPlugin extends Plugin {
     this.vocabSave();
   }
 
+  /* ---------- 单词本笔记（弹窗 📌 按钮 → 追加到 md 文件） ---------- */
+  async saveWordToNote(word, translation) {
+    const s = this.i18n();
+    try {
+      const raw = (this.settings.wordNotePath || '').trim();
+      const filePath = raw ? (raw.endsWith('.md') ? raw : raw + '.md') : '单词本.md';
+      const adapter = this.app.vault.adapter;
+      if (!(await adapter.exists(filePath))) {
+        await adapter.write(filePath, `# 单词本\n\n> 由 WordLens 划词收藏\n\n`);
+      }
+      const date = new Date().toISOString().slice(0, 10);
+      const line = `- **${word}** — ${translation || ''}（${date}）\n`;
+      await adapter.append(filePath, line);
+      new Notice(s.saveWordDone(word, filePath));
+    } catch (e) {
+      new Notice(s.saveWordFailed + (e && e.message ? e.message : e));
+      console.warn('[wordlens] save word note failed:', e);
+    }
+  }
+
   /* ---------- 视图 ---------- */
   async openTransView() {
     const leaf = this.app.workspace.getLeaf(true);
@@ -1500,6 +1540,9 @@ class WordLensSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName(s.showMorphology).setDesc(s.showMorphologyDesc)
       .addToggle((t) => t.setValue(this.plugin.settings.showMorphology)
         .onChange(async (v) => { this.plugin.settings.showMorphology = v; await this.plugin.saveSettings(); }));
+    new Setting(containerEl).setName(s.wordNotePath).setDesc(s.wordNotePathDesc)
+      .addText((t) => t.setPlaceholder('单词本.md').setValue(this.plugin.settings.wordNotePath)
+        .onChange(async (v) => { this.plugin.settings.wordNotePath = v.trim(); await this.plugin.saveSettings(); }));
 
     /* —— 整页翻译 —— */
     containerEl.createEl('h3', { text: s.secPage });
