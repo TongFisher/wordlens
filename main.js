@@ -110,9 +110,13 @@ const I18N = {
     secTranslation: '翻译设置',
     secEngines: '引擎设置',
     secTooltip: '弹窗内容',
+    secWordNote: '单词本',
     secPage: '整页翻译',
     masterEnabled: '启用翻译器',
     masterEnabledDesc: '总开关：关闭后不响应任何划词与悬停。',
+    restrictNoteContent: '仅限笔记正文响应',
+    activeModeName: '响应视图',
+    secOther: '其他',
     hoverEnabled: '悬停翻译',
     hoverEnabledDesc: '鼠标悬停在词上时自动取词翻译。',
     selectionEnabled: '划词翻译',
@@ -224,9 +228,13 @@ const I18N = {
     secTranslation: 'Translation',
     secEngines: 'Engines',
     secTooltip: 'Tooltip contents',
+    secWordNote: 'Word note',
     secPage: 'Page translation',
     masterEnabled: 'Enable translator',
     masterEnabledDesc: 'Master switch.',
+    restrictNoteContent: 'Only react inside note content',
+    activeModeName: 'Reaction area',
+    secOther: 'Other',
     hoverEnabled: 'Hover translation',
     hoverEnabledDesc: 'Translate words under the mouse cursor.',
     selectionEnabled: 'Selection translation',
@@ -1388,22 +1396,6 @@ class WordLensSettingTab extends PluginSettingTab {
       .addToggle((t) => t.setValue(this.plugin.settings.enabled)
         .onChange(async (v) => { this.plugin.settings.enabled = v; await this.plugin.saveSettings(); }));
 
-    new Setting(containerEl).setName(s.uiLang)
-      .addDropdown((d) => d
-        .addOption('system', s.uiLangSystem)
-        .addOption('zh', s.uiLangZh)
-        .addOption('en', s.uiLangEn)
-        .setValue(this.plugin.settings.uiLang)
-        .onChange(async (v) => { this.plugin.settings.uiLang = v; await this.plugin.saveSettings(); this.display(); }));
-
-    new Setting(containerEl).setName(s.resetBtn)
-      .addButton((b) => b.setButtonText(s.resetBtn).onClick(async () => {
-        this.plugin.settings = Object.assign({}, DEFAULT_SETTINGS, { uiLang: this.plugin.settings.uiLang });
-        await this.plugin.saveSettings();
-        new Notice(s.resetDone);
-        this.display();
-      }));
-
     containerEl.createEl('h3', { text: s.secFeatures });
 
     new Setting(containerEl).setName(s.hoverEnabled).setDesc(s.hoverEnabledDesc)
@@ -1415,10 +1407,10 @@ class WordLensSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName(s.pageEnabled).setDesc(s.pageEnabledDesc)
       .addToggle((t) => t.setValue(this.plugin.settings.enablePage)
         .onChange(async (v) => { this.plugin.settings.enablePage = v; await this.plugin.saveSettings(); }));
-    new Setting(containerEl).setName(s.masterEnabled).setDesc(s.restrictDesc)
+    new Setting(containerEl).setName(s.restrictNoteContent).setDesc(s.restrictDesc)
       .addToggle((t) => t.setValue(this.plugin.settings.restrictToNoteContent)
         .onChange(async (v) => { this.plugin.settings.restrictToNoteContent = v; await this.plugin.saveSettings(); }));
-    new Setting(containerEl).setName(s.hoverEnabled).setDesc(s.activeModeDesc)
+    new Setting(containerEl).setName(s.activeModeName).setDesc(s.activeModeDesc)
       .addDropdown((d) => d
         .addOption('edit', '编辑视图')
         .addOption('reading', '阅读视图')
@@ -1549,6 +1541,9 @@ class WordLensSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName(s.showMorphology).setDesc(s.showMorphologyDesc)
       .addToggle((t) => t.setValue(this.plugin.settings.showMorphology)
         .onChange(async (v) => { this.plugin.settings.showMorphology = v; await this.plugin.saveSettings(); }));
+
+    /* —— 单词本 —— */
+    containerEl.createEl('h3', { text: s.secWordNote });
     new Setting(containerEl).setName(s.wordNotePath).setDesc(s.wordNotePathDesc)
       .addText((t) => t.setPlaceholder('单词本.md').setValue(this.plugin.settings.wordNotePath)
         .onChange(async (v) => { this.plugin.settings.wordNotePath = v.trim(); await this.plugin.saveSettings(); }))
@@ -1564,6 +1559,23 @@ class WordLensSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName(s.pageHoverOriginal).setDesc(s.pageHoverOriginalDesc)
       .addToggle((t) => t.setValue(this.plugin.settings.pageTranslationHoverOriginal)
         .onChange(async (v) => { this.plugin.settings.pageTranslationHoverOriginal = v; await this.plugin.saveSettings(); }));
+
+    /* —— 其他 —— */
+    containerEl.createEl('h3', { text: s.secOther });
+    new Setting(containerEl).setName(s.uiLang)
+      .addDropdown((d) => d
+        .addOption('system', s.uiLangSystem)
+        .addOption('zh', s.uiLangZh)
+        .addOption('en', s.uiLangEn)
+        .setValue(this.plugin.settings.uiLang)
+        .onChange(async (v) => { this.plugin.settings.uiLang = v; await this.plugin.saveSettings(); this.display(); }));
+    new Setting(containerEl).setName(s.resetBtn)
+      .addButton((b) => b.setButtonText(s.resetBtn).onClick(async () => {
+        this.plugin.settings = Object.assign({}, DEFAULT_SETTINGS, { uiLang: this.plugin.settings.uiLang });
+        await this.plugin.saveSettings();
+        new Notice(s.resetDone);
+        this.display();
+      }));
   }
 }
 
