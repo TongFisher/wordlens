@@ -32,6 +32,7 @@ const DEFAULT_SETTINGS = {
   showDictionary: true,             // 显示词典（一词多译）
   showMultiTranslation: true,       // 显示全部同义译法
   showTransliteration: true,        // 显示音标/注音
+  showMorphology: true,             // 显示词根词缀拆解
   enabled: true,                    // 总开关
   restrictToNoteContent: true,      // 仅在笔记正文内响应
   activeMode: 'both',               // edit | reading | both
@@ -62,6 +63,7 @@ const I18N = {
     copied: '已复制',
     copyTranslation: '复制译文',
     speak: '朗读原文',
+    morphTitle: '词根词缀',
     vocabTitle: '生词本',
     vocabEmpty: '还没有翻译记录',
     vocabReload: '刷新',
@@ -150,6 +152,8 @@ const I18N = {
     showMultiTranslation: '显示一词多译',
     showMultiTranslationDesc: '词典接口免费，不消耗翻译 API 额度。',
     showTransliteration: '显示音标',
+    showMorphology: '显示词根词缀',
+    showMorphologyDesc: '对单词拆解前缀/词根/后缀并附含义（有道词根优先，内置规则兜底）。',
     pageHoverOriginal: '悬停显示原文',
     pageHoverOriginalDesc: '悬停在已翻译段落上时，显示该段翻译前的原文。',
     resetBtn: '恢复默认设置',
@@ -165,6 +169,7 @@ const I18N = {
     copied: 'Copied',
     copyTranslation: 'Copy translation',
     speak: 'Speak source text',
+    morphTitle: 'Morphology',
     vocabTitle: 'Vocabulary',
     vocabEmpty: 'No translation history yet',
     vocabReload: 'Reload',
@@ -253,6 +258,8 @@ const I18N = {
     showMultiTranslation: 'Show all translations',
     showMultiTranslationDesc: 'Free dictionary API, no translation quota consumed.',
     showTransliteration: 'Show phonetics',
+    showMorphology: 'Show morphology',
+    showMorphologyDesc: 'Break down words into prefix/root/suffix with meanings (Youdao roots preferred, built-in rules as fallback).',
     pageHoverOriginal: 'Hover shows original',
     pageHoverOriginalDesc: 'Hovering a translated paragraph shows its original text.',
     resetBtn: 'Reset to defaults',
@@ -324,6 +331,69 @@ function normLang(code, engine) {
 /** 数组去重（保持原顺序）。 */
 function dedupe(arr) {
   return Array.from(new Set(arr));
+}
+
+/* ================================================================
+ * 词根词缀拆解（自研常用词缀表，按长度降序防误拆）
+ * ================================================================ */
+const MORPH_PREFIXES = {
+  counter: '反对/对应', contra: '相反/对抗', extra: '超出/外部', hyper: '过度/超出', inter: '在…之间', intra: '内部', multi: '多', over: '过度/在上', post: '在…之后', pre: '在…之前/预先', pro: '向前/支持', super: '超级/在上', trans: '跨越/转变', ultra: '极端/超出', under: '不足/在下', anti: '反对/对抗', auto: '自动/自身', bio: '生物/生命', con: '共同/加强', de: '去除/向下', dis: '不/分离', en: '使…', ex: '前任/向外', fore: '预先/前面', il: '不/向内', im: '不/向内', in: '不/向内', ir: '不/向内', mal: '坏/不良', mid: '中间', mis: '错误/坏', mono: '单一', non: '不/非', out: '超过/向外', per: '每/通过', poly: '多', pseudo: '假/伪', re: '再次/返回', semi: '半', sub: '下/次', tele: '远距离', tri: '三', un: '不/相反', uni: '单一', up: '向上',
+};
+const MORPH_SUFFIXES = {
+  ability: '可…性', ibility: '可…性', ation: '…行为/状态', tion: '…行为/状态', sion: '…行为/状态', ment: '…结果/手段', ness: '…状态/性质', able: '可…的', ible: '可…的', ous: '充满…的', ive: '有…倾向的', ism: '…主义/学说', ist: '从事…的人', ian: '…的人/专家', ity: '…性质/状态', ize: '使…化', ise: '使…化', ful: '充满…的', less: '无…的', ly: '…地（副词）', er: '…的人/物', or: '…的人/物', ing: '进行中/…ing', ed: '…的（过去式）', age: '…行为/集合', al: '…的/…的（名词）', en: '使…/…的', hood: '…身份/时期', ic: '…的', ical: '…的', ish: '略微…的/…的', ship: '…身份/技能', ward: '朝…方向', wise: '以…方式', ance: '…状态/性质', ence: '…状态/性质', ant: '…的/…者', ent: '…的/…者', cy: '…状态/性质', dom: '…领域/状态', th: '…性质（名词）', ty: '…状态（名词）', ure: '…行为/结果',
+};
+
+/** 规则拆解：前缀 + 词根 + 后缀（先拆前缀再拆后缀，长前缀优先）。非英文单词或无法拆解返回 null。 */
+function analyzeMorph(text) {
+  if (!text || !/^[a-zA-Z][a-zA-Z'-]{2,19}$/.test(text)) return null;
+  const lower = text.toLowerCase();
+  const pfxs = Object.keys(MORPH_PREFIXES).sort((a, b) => b.length - a.length);
+  const sfxs = Object.keys(MORPH_SUFFIXES).sort((a, b) => b.length - a.length);
+  // 1) 前缀 + 词根 + 后缀
+  for (const pfx of pfxs) {
+    if (lower.length - pfx.length >= 3 && lower.startsWith(pfx)) {
+      const rest = lower.slice(pfx.length);
+      for (const sfx of sfxs) {
+        if (rest.length - sfx.length >= 2 && rest.endsWith(sfx)) {
+          const root = rest.slice(0, rest.length - sfx.length);
+          if (root.length >= 3) {
+            return { parts: [
+              { type: 'prefix', text: pfx, mean: MORPH_PREFIXES[pfx] },
+              { type: 'root', text: root },
+              { type: 'suffix', text: sfx, mean: MORPH_SUFFIXES[sfx] },
+            ] };
+          }
+        }
+      }
+    }
+  }
+  // 2) 前缀 + 词根
+  for (const pfx of pfxs) {
+    if (lower.length - pfx.length >= 3 && lower.startsWith(pfx)) {
+      const rest = lower.slice(pfx.length);
+      if (rest.length < 3) continue;
+      // 短前缀（2-3 字母，如 re-/in-/un-）误判率高：若剩余部分能匹配任何
+      // 后缀，则视为整词更适合无前缀拆解（交给分支 3），跳过此前缀
+      if (pfx.length <= 3) {
+        let subOk = false;
+        for (const sfx of sfxs) {
+          if (rest.endsWith(sfx)) { subOk = true; break; }
+        }
+        if (subOk) continue;
+      }
+      return { parts: [{ type: 'prefix', text: pfx, mean: MORPH_PREFIXES[pfx] }, { type: 'root', text: rest }] };
+    }
+  }
+  // 3) 词根 + 后缀
+  for (const sfx of sfxs) {
+    if (lower.length - sfx.length >= 3 && lower.endsWith(sfx)) {
+      const root = lower.slice(0, lower.length - sfx.length);
+      if (root.length >= 3) {
+        return { parts: [{ type: 'root', text: root }, { type: 'suffix', text: sfx, mean: MORPH_SUFFIXES[sfx] }] };
+      }
+    }
+  }
+  return null;
 }
 
 function isWordChar(c) {
@@ -568,9 +638,12 @@ class YoudaoEngine extends BaseEngine {
       const ce = data.ce && data.ce.word;
       let phonetics = [];
       let entries = [];
+      let morph = '';
+      const stripTags = (s) => String(s || '').replace(/<[^>]*>/g, '').trim();
       if (ec && ec.length) {
         const w = ec[0];
         phonetics = [w.usphone, w.ukphone].filter(Boolean).map((p) => `/${p}/`);
+        morph = stripTags(w.w);
         entries = (w.trs || [])
           .map((t) => {
             const parts = (t.tr || []).map((x) => x.l && x.l.i).filter(Boolean);
@@ -584,6 +657,7 @@ class YoudaoEngine extends BaseEngine {
           .filter(Boolean)
           .slice(0, 2)
           .map((p) => `/${p}/`);
+        morph = stripTags(w.w);
         entries = (w.trs || [])
           .map((t) => {
             const parts = (t.tr || []).map((x) => x.l && x.l.i).filter(Boolean);
@@ -591,8 +665,12 @@ class YoudaoEngine extends BaseEngine {
           })
           .filter((e) => e.meaning);
       }
-      if (!entries.length && !phonetics.length) return null;
-      return { phonetics, entries };
+      const out = {};
+      if (phonetics.length) out.phonetics = phonetics;
+      if (entries.length) out.entries = entries;
+      if (morph) out.morph = morph;
+      if (!Object.keys(out).length) return null;
+      return out;
     } catch (_) {
       return null;
     }
@@ -866,6 +944,35 @@ class Popup {
         }
       }
       if (dictEl.childNodes.length) el.appendChild(dictEl);
+    }
+    // 4.5 词根词缀拆解（有道词根优先，内置规则拆解兜底）
+    if (this.plugin.settings.showMorphology && /^[a-zA-Z]/.test(sourceText) && sourceText.split(/\s+/).length <= 2) {
+      let morphText = '';
+      if (dict && dict.morph) {
+        morphText = dict.morph;
+      } else {
+        const m = analyzeMorph(sourceText);
+        if (m) {
+          morphText = m.parts.map((p) => {
+            if (p.type === 'prefix') return `${p.text}-（${p.mean}）`;
+            if (p.type === 'suffix') return `-${p.text}（${p.mean}）`;
+            return p.text;
+          }).join(' + ');
+        }
+      }
+      if (morphText) {
+        const mEl = document.createElement('div');
+        mEl.className = 'wordlens-popup-morph';
+        const label = document.createElement('span');
+        label.className = 'wordlens-popup-morph-label';
+        label.textContent = s.morphTitle;
+        mEl.appendChild(label);
+        const body = document.createElement('span');
+        body.className = 'wordlens-popup-morph-body';
+        body.textContent = morphText;
+        mEl.appendChild(body);
+        el.appendChild(mEl);
+      }
     }
     // 5. 检测语言（底部小字）
     if (this.plugin.settings.showDetectedLang && result.sourceLang && result.sourceLang !== 'auto') {
@@ -1390,6 +1497,9 @@ class WordLensSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName(s.showTransliteration)
       .addToggle((t) => t.setValue(this.plugin.settings.showTransliteration)
         .onChange(async (v) => { this.plugin.settings.showTransliteration = v; await this.plugin.saveSettings(); }));
+    new Setting(containerEl).setName(s.showMorphology).setDesc(s.showMorphologyDesc)
+      .addToggle((t) => t.setValue(this.plugin.settings.showMorphology)
+        .onChange(async (v) => { this.plugin.settings.showMorphology = v; await this.plugin.saveSettings(); }));
 
     /* —— 整页翻译 —— */
     containerEl.createEl('h3', { text: s.secPage });
@@ -1515,4 +1625,4 @@ class TransView extends ItemView {
   }
 }
 
-module.exports = { default: WordLensPlugin, ENGINES, DEFAULT_SETTINGS, I18N };
+module.exports = { default: WordLensPlugin, ENGINES, DEFAULT_SETTINGS, I18N, analyzeMorph };

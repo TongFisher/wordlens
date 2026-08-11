@@ -109,6 +109,27 @@
   color: var(--text-normal, #eeeeee);
 }
 
+/* 词根词缀拆解 */
+.wordlens-popup-morph {
+  margin-top: 6px;
+  padding-top: 4px;
+  border-top: 1px dashed var(--background-modifier-border);
+  color: var(--text-muted);
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+
+.wordlens-popup-morph-label {
+  color: var(--text-accent);
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.wordlens-popup-morph-body {
+  color: var(--text-normal);
+  word-break: break-word;
+}
+
 /* 检测语言元信息 */
 .wordlens-popup-meta {
   margin-top: 4px;
