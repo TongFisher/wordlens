@@ -347,7 +347,7 @@ function caretRangeAt(x, y) {
   return null;
 }
 
-/** 从坐标点提取单词或整句。 */
+/** 从坐标点提取单词或整句（带坐标校验：拦截 caretRangeFromPoint 的吸附）。 */
 function extractAtPoint(x, y, mode) {
   const range = caretRangeAt(x, y);
   if (!range) return null;
@@ -356,32 +356,25 @@ function extractAtPoint(x, y, mode) {
   const text = node.textContent || '';
   if (!text) return null;
   const off = range.startOffset;
-  if (mode === 'sentence') {
-    let start = off;
-    let end = off;
-    while (start > 0 && !isSentenceBoundary(text[start - 1])) start--;
-    while (end < text.length && !isSentenceBoundary(text[end])) end++;
-    if (start >= end) return null;
-    const word = text.slice(start, end).trim();
-    if (!word || word.length > 200) return null;
-    const rr = document.createRange();
-    rr.setStart(node, start);
-    rr.setEnd(node, end);
-    return { text: word, rect: rr.getBoundingClientRect() };
-  }
-  // 单词模式：光标处本身必须是词字符，空白/标点/词间隙处不提取
-  if (off >= text.length || !isWordChar(text[off])) return null;
   let start = off;
   let end = off;
-  while (start > 0 && isWordChar(text[start - 1])) start--;
-  while (end < text.length && isWordChar(text[end])) end++;
+  if (mode === 'sentence') {
+    while (start > 0 && !isSentenceBoundary(text[start - 1])) start--;
+    while (end < text.length && !isSentenceBoundary(text[end])) end++;
+  } else {
+    while (start > 0 && isWordChar(text[start - 1])) start--;
+    while (end < text.length && isWordChar(text[end])) end++;
+  }
   if (start >= end) return null;
   const word = text.slice(start, end).trim();
   if (!word || word.length > 200) return null;
   const rr = document.createRange();
   rr.setStart(node, start);
   rr.setEnd(node, end);
-  return { text: word, rect: rr.getBoundingClientRect() };
+  const rect = rr.getBoundingClientRect();
+  // 光标必须真的落在词矩形内（caretRangeFromPoint 在空白处会吸附到邻近词）
+  if (x < rect.left - 4 || x > rect.right + 4 || y < rect.top - 4 || y > rect.bottom + 4) return null;
+  return { text: word, rect };
 }
 
 /** 判断节点是否位于笔记正文（可选编辑/阅读限定）。 */
@@ -899,8 +892,8 @@ class WordLensPlugin extends Plugin {
     this.popup = new Popup(this);
     this.selectionActive = false;
     this._reqSeq = 0; // 翻译请求竞态序号
+    this._hoverTimer = null; // 悬停防抖定时器
     this.paged = new WeakMap(); // 整页翻译原文缓存（段落元素 → 原文）
-    this._lastHover = { x: 0, y: 0, t: 0, text: '' };
 
     this.addSettingTab(new WordLensSettingTab(this.app, this));
 
@@ -983,15 +976,18 @@ class WordLensPlugin extends Plugin {
 
     // —— 全局事件 ——
     this.registerDomEvent(document, 'mousemove', (e) => this.onMouseMove(e));
+    this.registerDomEvent(document, 'mouseleave', () => {
+      // 鼠标离开窗口 → 隐藏弹窗（划词锁定期间除外）
+      if (!this.selectionActive) this.popup.hide();
+    });
     this.registerDomEvent(document, 'selectionchange', () => this.onSelectionChange());
     this.registerDomEvent(document, 'keydown', (e) => {
       if (e.key === 'Escape') { this.popup.hide(); this.selectionActive = false; }
     });
     this.registerDomEvent(document, 'scroll', () => { if (!this.selectionActive) this.popup.hide(); }, true);
-    this.registerDomEvent(document, 'click', (e) => {
+    this.registerDomEvent(document, 'mousedown', (e) => {
       if (this.popup.isOwn(e.target)) return;
       this.popup.hide();
-      this.selectionActive = false;
     });
   }
 
@@ -1014,30 +1010,39 @@ class WordLensPlugin extends Plugin {
 
   /* ---------- 悬停 ---------- */
   onMouseMove(e) {
-    if (!this.settings.enabled || !this.settings.enableHover) return;
-    if (this.selectionActive) return;
+    if (!this.settings.enabled) return;
+    this.mouseX = e.clientX;
+    this.mouseY = e.clientY;
     if (this.popup.isOwn(e.target)) return;
-    // 移出笔记正文 → 立即隐藏弹窗
+    // 移出笔记正文 → 取消待触发并隐藏弹窗
     if (this.settings.restrictToNoteContent && !inNoteContent(e.target, this.settings.activeMode)) {
-      this.popup.hide();
+      if (this._hoverTimer) { clearTimeout(this._hoverTimer); this._hoverTimer = null; }
+      if (!this.selectionActive) this.popup.hide();
       return;
     }
-    const now = Date.now();
-    if (now - this._lastHover.t < this.settings.delayMs) return;
-    if (Math.abs(e.clientX - this._lastHover.x) < 3 && Math.abs(e.clientY - this._lastHover.y) < 3) return;
-    this._lastHover = { x: e.clientX, y: e.clientY, t: now };
-    // 整页翻译段落：悬停显示原文
-    if (this.settings.pageTranslationHoverOriginal) {
-      const el = e.target instanceof Element ? e.target.closest('.wl-paged') : null;
-      if (el) {
-        const orig = this.paged.get(el) || el.getAttribute('data-wl-orig');
-        if (orig) { this.popup.showPlain(orig, el.getBoundingClientRect()); return; }
+    // 防抖式延迟：鼠标每次移动都重置定时器，停住 delayMs 才触发
+    if (this._hoverTimer) { clearTimeout(this._hoverTimer); this._hoverTimer = null; }
+    if (!this.settings.enableHover) return;
+    if (this.selectionActive) return;
+    const x = e.clientX;
+    const y = e.clientY;
+    this._hoverTimer = window.setTimeout(() => {
+      this._hoverTimer = null;
+      if (this.selectionActive) return;
+      // 整页翻译段落：悬停显示原文
+      if (this.settings.pageTranslationHoverOriginal) {
+        const target = document.elementFromPoint(x, y);
+        const block = target && target.closest ? target.closest('.wl-paged') : null;
+        if (block) {
+          const orig = this.paged.get(block) || block.getAttribute('data-wl-orig');
+          if (orig) { this.popup.showPlain(orig, block.getBoundingClientRect()); return; }
+        }
       }
-    }
-    const hit = extractAtPoint(e.clientX, e.clientY, this.settings.textType);
-    // 取不到词（空白/标点/间隔处）→ 隐藏弹窗
-    if (!hit) { this.popup.hide(); return; }
-    this.translate(hit.text, this.settings.mouseoverEngine, hit.rect);
+      const hit = extractAtPoint(x, y, this.settings.textType);
+      // 取不到词（空白/标点/词间隙）→ 隐藏弹窗
+      if (!hit) { this.popup.hide(); return; }
+      this.translate(hit.text, this.settings.mouseoverEngine, hit.rect);
+    }, Math.max(0, this.settings.delayMs | 0));
   }
 
   /* ---------- 划词 ---------- */
