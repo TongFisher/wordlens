@@ -1,9 +1,9 @@
 {
   "id": "wordlens",
   "name": "WordLens",
-  "version": "0.2.14",
+  "version": "0.2.15",
   "minAppVersion": "1.4.0",
-  "description": "Hover/select translation with a free multi-translation dictionary, smart bidirectional mode, 7 engines and a Chinese UI.",
+  "description": "Hover/select translation with a free multi-translation dictionary, smart bidirectional mode, 7 engines and a Chinese UI. 划词翻译、悬停取词、查词、词典、一词多译、词根词缀、生词本、整页翻译、中文界面.",
   "author": "TongFisher",
   "isDesktopOnly": false
 }
