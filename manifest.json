@@ -1,9 +1,9 @@
 {
-	"id": "wordlens",
-	"name": "WordLens",
-	"version": "0.1.0",
-	"minAppVersion": "1.12.0",
-	"description": "划词即译的划词翻译与词典插件：悬停 / 划词翻译、一词多译、双向智能方向，支持有道智云、百度、腾讯云、阿里云、Bing、Google 七种翻译源.",
-	"author": "546335130",
-	"isDesktopOnly": false
+  "id": "wordlens",
+  "name": "WordLens",
+  "version": "0.1.0",
+  "minAppVersion": "1.4.0",
+  "description": "Word translation, quick dictionary lookup and vocabulary marking.",
+  "author": "546335130",
+  "isDesktopOnly": false
 }
