@@ -356,15 +356,25 @@ function extractAtPoint(x, y, mode) {
   const text = node.textContent || '';
   if (!text) return null;
   const off = range.startOffset;
-  let start = off;
-  let end = off;
   if (mode === 'sentence') {
+    let start = off;
+    let end = off;
     while (start > 0 && !isSentenceBoundary(text[start - 1])) start--;
     while (end < text.length && !isSentenceBoundary(text[end])) end++;
-  } else {
-    while (start > 0 && isWordChar(text[start - 1])) start--;
-    while (end < text.length && isWordChar(text[end])) end++;
+    if (start >= end) return null;
+    const word = text.slice(start, end).trim();
+    if (!word || word.length > 200) return null;
+    const rr = document.createRange();
+    rr.setStart(node, start);
+    rr.setEnd(node, end);
+    return { text: word, rect: rr.getBoundingClientRect() };
   }
+  // 单词模式：光标处本身必须是词字符，空白/标点/词间隙处不提取
+  if (off >= text.length || !isWordChar(text[off])) return null;
+  let start = off;
+  let end = off;
+  while (start > 0 && isWordChar(text[start - 1])) start--;
+  while (end < text.length && isWordChar(text[end])) end++;
   if (start >= end) return null;
   const word = text.slice(start, end).trim();
   if (!word || word.length > 200) return null;
