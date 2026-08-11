@@ -152,6 +152,31 @@
   color: var(--text-normal);
 }
 
+/* ===== 单词本文件选择器 ===== */
+.wordlens-filelist {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.wordlens-filelist-row {
+  text-align: left;
+  padding: 5px 10px;
+  border-radius: 5px;
+  border: none;
+  background: none;
+  color: var(--text-normal);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.wordlens-filelist-row:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-accent);
+}
+
 /* ===== 生词本视图 ===== */
 .wordlens-vocab-bar {
   display: flex;

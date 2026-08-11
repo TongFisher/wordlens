@@ -3,7 +3,7 @@
 // 引擎：Google / Google GTX / Bing / 有道智云 / 百度 / 腾讯云 / 阿里云
 // 依赖：仅 Obsidian 官方 API + Node 内置 crypto，无任何第三方库
 
-const { Plugin, PluginSettingTab, Setting, Notice, ItemView, Platform, requestUrl } = require('obsidian');
+const { Plugin, PluginSettingTab, Setting, Notice, ItemView, Platform, requestUrl, Modal } = require('obsidian');
 const crypto = require('crypto');
 
 /* ================================================================
@@ -34,6 +34,7 @@ const DEFAULT_SETTINGS = {
   showTransliteration: true,        // 显示音标/注音
   showMorphology: true,             // 显示词根词缀（有道词根+内置规则兜底）
   wordNotePath: '',                 // 单词笔记文件路径（相对库根；空 = 单词本.md）
+  wordNoteIncludeTranslation: false, // 存词时是否附带译文（默认只存词）
   enabled: true,                    // 总开关
   restrictToNoteContent: true,      // 仅在笔记正文内响应
   activeMode: 'both',               // edit | reading | both
@@ -69,7 +70,10 @@ const I18N = {
     saveWordDone: (word, file) => `已存入单词本：${word} → ${file}`,
     saveWordFailed: '存入单词本失败：',
     wordNotePath: '单词本文件路径',
-    wordNotePathDesc: '点击弹窗中的 📌 按钮，把查到的词追加到这个 md 文件（相对库根路径，如 英语/单词本.md；留空默认 单词本.md）。',
+    wordNotePathDesc: '点击弹窗中的 📌 按钮，把查到的词追加到这个 md 文件。点「选择文件…」从库内挑选，或直接输入新路径（留空默认 单词本.md）。',
+    wordNotePick: '选择文件…',
+    wordNoteIncludeTranslation: '存词时附带译文',
+    wordNoteIncludeTranslationDesc: '开启后每条记录包含译文；关闭则只存单词（默认）。',
     vocabTitle: '生词本',
     vocabEmpty: '还没有翻译记录',
     vocabReload: '刷新',
@@ -180,7 +184,10 @@ const I18N = {
     saveWordDone: (word, file) => `Saved to word note: ${word} → ${file}`,
     saveWordFailed: 'Failed to save word note: ',
     wordNotePath: 'Word note file path',
-    wordNotePathDesc: 'Click the 📌 button in the popup to append the word to this md file (vault-relative path, e.g. English/wordbook.md; empty = wordbook.md).',
+    wordNotePathDesc: 'Click the 📌 button in the popup to append the word to this md file. Use "Browse…" to pick from the vault, or type a new path (empty = wordbook.md).',
+    wordNotePick: 'Browse…',
+    wordNoteIncludeTranslation: 'Include translation when saving',
+    wordNoteIncludeTranslationDesc: 'When on, each entry includes the translation; off = word only (default).',
     vocabTitle: 'Vocabulary',
     vocabEmpty: 'No translation history yet',
     vocabReload: 'Reload',
@@ -1022,7 +1029,8 @@ class WordLensPlugin extends Plugin {
     this._hoverTimer = null; // 悬停防抖定时器
     this.paged = new WeakMap(); // 整页翻译原文缓存（段落元素 → 原文）
 
-    this.addSettingTab(new WordLensSettingTab(this.app, this));
+    this.settingTab = new WordLensSettingTab(this.app, this);
+    this.addSettingTab(this.settingTab);
 
     // —— 命令（ID 与 v0.1 兼容） ——
     this.addCommand({
@@ -1262,7 +1270,9 @@ class WordLensPlugin extends Plugin {
         await adapter.write(filePath, `# 单词本\n\n> 由 WordLens 划词收藏\n\n`);
       }
       const date = new Date().toISOString().slice(0, 10);
-      const line = `- **${word}** — ${translation || ''}（${date}）\n`;
+      const line = this.settings.wordNoteIncludeTranslation && translation
+        ? `- **${word}** — ${translation}（${date}）\n`
+        : `- **${word}**（${date}）\n`;
       await adapter.append(filePath, line);
       new Notice(s.saveWordDone(word, filePath));
     } catch (e) {
@@ -1542,7 +1552,13 @@ class WordLensSettingTab extends PluginSettingTab {
         .onChange(async (v) => { this.plugin.settings.showMorphology = v; await this.plugin.saveSettings(); }));
     new Setting(containerEl).setName(s.wordNotePath).setDesc(s.wordNotePathDesc)
       .addText((t) => t.setPlaceholder('单词本.md').setValue(this.plugin.settings.wordNotePath)
-        .onChange(async (v) => { this.plugin.settings.wordNotePath = v.trim(); await this.plugin.saveSettings(); }));
+        .onChange(async (v) => { this.plugin.settings.wordNotePath = v.trim(); await this.plugin.saveSettings(); }))
+      .addButton((b) => b.setButtonText(s.wordNotePick).onClick(() => {
+        new WordNoteFileModal(this.plugin.app, this.plugin).open();
+      }));
+    new Setting(containerEl).setName(s.wordNoteIncludeTranslation).setDesc(s.wordNoteIncludeTranslationDesc)
+      .addToggle((t) => t.setValue(this.plugin.settings.wordNoteIncludeTranslation)
+        .onChange(async (v) => { this.plugin.settings.wordNoteIncludeTranslation = v; await this.plugin.saveSettings(); }));
 
     /* —— 整页翻译 —— */
     containerEl.createEl('h3', { text: s.secPage });
@@ -1553,10 +1569,45 @@ class WordLensSettingTab extends PluginSettingTab {
 }
 
 /* ================================================================
- * 视图：生词本 / 翻译面板
+ * 视图：生词本 / 翻译面板 / 单词本文件选择
  * ================================================================ */
 const VOCAB_VIEW_TYPE = 'wordlens-vocab';
 const TRANS_VIEW_TYPE = 'wordlens-trans';
+
+/** 单词本文件选择器：列出库内所有 md 文件，点击即选。 */
+class WordNoteFileModal extends Modal {
+  constructor(app, plugin) {
+    super(app);
+    this.plugin = plugin;
+  }
+  onOpen() {
+    const s = this.plugin.i18n();
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.createEl('h3', { text: s.wordNotePick });
+    const files = this.app.vault
+      .getFiles()
+      .filter((f) => f.extension === 'md')
+      .sort((a, b) => a.path.localeCompare(b.path));
+    const list = contentEl.createDiv({ cls: 'wordlens-filelist' });
+    if (!files.length) {
+      list.createEl('p', { text: s.vocabEmpty });
+    }
+    for (const f of files) {
+      const row = list.createEl('button', { cls: 'wordlens-filelist-row', text: f.path });
+      row.addEventListener('click', () => {
+        this.plugin.settings.wordNotePath = f.path;
+        this.plugin.saveSettings();
+        if (this.plugin.settingTab) this.plugin.settingTab.display();
+        new Notice(s.wordNotePath + ': ' + f.path);
+        this.close();
+      });
+    }
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+}
 
 class VocabView extends ItemView {
   constructor(leaf, plugin) {
