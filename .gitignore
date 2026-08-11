@@ -10,3 +10,4 @@ node_modules/
 
 # Local editor artifacts
 .obsidian/
+rl_test/
