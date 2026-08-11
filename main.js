@@ -1269,10 +1269,9 @@ class WordLensPlugin extends Plugin {
       if (!(await adapter.exists(filePath))) {
         await adapter.write(filePath, `# 单词本\n\n> 由 WordLens 划词收藏\n\n`);
       }
-      const date = new Date().toISOString().slice(0, 10);
       const line = this.settings.wordNoteIncludeTranslation && translation
-        ? `- **${word}** — ${translation}（${date}）\n`
-        : `- **${word}**（${date}）\n`;
+        ? `- **${word}** — ${translation}\n`
+        : `- **${word}**\n`;
       await adapter.append(filePath, line);
       new Notice(s.saveWordDone(word, filePath));
     } catch (e) {

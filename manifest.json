@@ -1,7 +1,7 @@
 {
   "id": "wordlens",
   "name": "WordLens",
-  "version": "0.2.12",
+  "version": "0.2.13",
   "minAppVersion": "1.4.0",
   "description": "Hover/select translation with a free multi-translation dictionary, smart bidirectional mode, 7 engines and a Chinese UI.",
   "author": "TongFisher",
