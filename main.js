@@ -321,6 +321,11 @@ function normLang(code, engine) {
   return c;
 }
 
+/** 数组去重（保持原顺序）。 */
+function dedupe(arr) {
+  return Array.from(new Set(arr));
+}
+
 function isWordChar(c) {
   return !!c && /[\p{L}\p{N}'\-_]/u.test(c);
 }
@@ -564,10 +569,10 @@ class YoudaoEngine extends BaseEngine {
         const w = ec[0];
         phonetics = [w.usphone, w.ukphone].filter(Boolean).map((p) => `/${p}/`);
         entries = (w.trs || [])
-          .map((t) => ({
-            pos: (t.pos || '').trim(),
-            meaning: (t.tr || []).map((x) => x.l && x.l.i).filter(Boolean).join('；'),
-          }))
+          .map((t) => {
+            const parts = (t.tr || []).map((x) => x.l && x.l.i).filter(Boolean);
+            return { pos: (t.pos || '').trim(), meaning: dedupe(parts).join('；') };
+          })
           .filter((e) => e.meaning);
       } else if (ce && ce.length) {
         const w = ce[0];
@@ -577,10 +582,10 @@ class YoudaoEngine extends BaseEngine {
           .slice(0, 2)
           .map((p) => `/${p}/`);
         entries = (w.trs || [])
-          .map((t) => ({
-            pos: (t.pos || '').trim(),
-            meaning: (t.tr || []).map((x) => x.l && x.l.i).filter(Boolean).join('；'),
-          }))
+          .map((t) => {
+            const parts = (t.tr || []).map((x) => x.l && x.l.i).filter(Boolean);
+            return { pos: (t.pos || '').trim(), meaning: dedupe(parts).join('；') };
+          })
           .filter((e) => e.meaning);
       }
       if (!entries.length && !phonetics.length) return null;
@@ -759,6 +764,18 @@ class Popup {
     el.style.display = 'block';
     this.position(rect);
   }
+  /** 展示加载反馈（请求翻译期间）。 */
+  showLoading(rect) {
+    this.token++;
+    const el = this.ensure();
+    el.textContent = '';
+    const ld = document.createElement('div');
+    ld.className = 'wordlens-popup-loading';
+    ld.textContent = '⋯';
+    el.appendChild(ld);
+    el.style.display = 'block';
+    this.position(rect);
+  }
   /** 展示翻译结果（布局与经典版一致：工具栏→词头→译文→词典→检测语言）。 */
   show(result, sourceText, rect) {
     if (!result || !result.targetText) return;
@@ -871,6 +888,7 @@ class WordLensPlugin extends Plugin {
     };
     this.popup = new Popup(this);
     this.selectionActive = false;
+    this._reqSeq = 0; // 翻译请求竞态序号
     this.paged = new WeakMap(); // 整页翻译原文缓存（段落元素 → 原文）
     this._lastHover = { x: 0, y: 0, t: 0, text: '' };
 
@@ -989,7 +1007,11 @@ class WordLensPlugin extends Plugin {
     if (!this.settings.enabled || !this.settings.enableHover) return;
     if (this.selectionActive) return;
     if (this.popup.isOwn(e.target)) return;
-    if (this.settings.restrictToNoteContent && !inNoteContent(e.target, this.settings.activeMode)) return;
+    // 移出笔记正文 → 立即隐藏弹窗
+    if (this.settings.restrictToNoteContent && !inNoteContent(e.target, this.settings.activeMode)) {
+      this.popup.hide();
+      return;
+    }
     const now = Date.now();
     if (now - this._lastHover.t < this.settings.delayMs) return;
     if (Math.abs(e.clientX - this._lastHover.x) < 3 && Math.abs(e.clientY - this._lastHover.y) < 3) return;
@@ -1003,7 +1025,8 @@ class WordLensPlugin extends Plugin {
       }
     }
     const hit = extractAtPoint(e.clientX, e.clientY, this.settings.textType);
-    if (!hit) return;
+    // 取不到词（空白/标点/间隔处）→ 隐藏弹窗
+    if (!hit) { this.popup.hide(); return; }
     this.translate(hit.text, this.settings.mouseoverEngine, hit.rect);
   }
 
@@ -1039,6 +1062,7 @@ class WordLensPlugin extends Plugin {
   /* ---------- 翻译核心 ---------- */
   async translate(text, engineKey, rect) {
     if (!text || !this.settings.enabled) return;
+    const seq = ++this._reqSeq; // 竞态保护：只显示最新一次请求的结果
     const s = this.i18n();
     // 语言方向
     let src = this.settings.sourceLang || 'auto';
@@ -1054,7 +1078,9 @@ class WordLensPlugin extends Plugin {
       const hit = this.popup.cacheGet(cacheKey);
       if (hit) { this.popup.show(hit, text, rect); return; }
     }
+    this.popup.showLoading(rect); // 请求期间显示加载反馈
     const result = await engine.cls.translate(text, src, tgt, this.settings);
+    if (seq !== this._reqSeq) return; // 已被更新的请求取代，丢弃过期结果
     if (!result) return;
     // 跳过同语言 / 无变化
     if (this.settings.skipSameLanguage && result.sourceLang && result.sourceLang !== 'auto' && normLang(result.sourceLang, engineKey) === normLang(tgt, engineKey)) return;
