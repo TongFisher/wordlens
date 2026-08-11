@@ -759,7 +759,7 @@ class Popup {
     el.style.display = 'block';
     this.position(rect);
   }
-  /** 展示翻译结果。 */
+  /** 展示翻译结果（布局与经典版一致：工具栏→词头→译文→词典→检测语言）。 */
   show(result, sourceText, rect) {
     if (!result || !result.targetText) return;
     const tk = ++this.token;
@@ -768,23 +768,44 @@ class Popup {
     const s = this.plugin.i18n();
     const el = this.ensure();
     el.textContent = '';
-    // 词头：原文 + 检测语言
-    const head = document.createElement('div');
-    head.className = 'wordlens-popup-head';
+    // 1. 工具栏（右上角小图标按钮）
+    const bar = document.createElement('div');
+    bar.className = 'wordlens-popup-bar';
+    const btnSpeak = document.createElement('button');
+    btnSpeak.className = 'wordlens-popup-btn wordlens-speak-btn';
+    btnSpeak.textContent = '🔊';
+    btnSpeak.title = s.speak;
+    btnSpeak.addEventListener('click', (e) => {
+      e.stopPropagation();
+      try {
+        const u = new SpeechSynthesisUtterance(sourceText);
+        u.lang = result.sourceLang === 'zh' ? 'zh-CN' : result.sourceLang;
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(u);
+      } catch (_) {}
+    });
+    const btnCopy = document.createElement('button');
+    btnCopy.className = 'wordlens-popup-btn wordlens-copy-btn';
+    btnCopy.textContent = '📋';
+    btnCopy.title = s.copy;
+    btnCopy.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      try {
+        await navigator.clipboard.writeText(result.targetText);
+        new Notice(s.copied);
+      } catch (_) {}
+    });
+    bar.appendChild(btnSpeak);
+    bar.appendChild(btnCopy);
+    el.appendChild(bar);
+    // 2. 词头（大号原文）
     if (this.plugin.settings.showSourceText) {
-      const src = document.createElement('span');
-      src.className = 'wordlens-popup-src';
-      src.textContent = sourceText;
-      head.appendChild(src);
+      const head = document.createElement('div');
+      head.className = 'wordlens-popup-headword';
+      head.textContent = sourceText;
+      el.appendChild(head);
     }
-    if (this.plugin.settings.showDetectedLang && result.sourceLang && result.sourceLang !== 'auto') {
-      const tag = document.createElement('span');
-      tag.className = 'wordlens-popup-lang';
-      tag.textContent = String(result.sourceLang).toUpperCase();
-      head.appendChild(tag);
-    }
-    if (head.childNodes.length) el.appendChild(head);
-    // 译文 + 音标
+    // 3. 译文 + 音标
     const target = document.createElement('div');
     target.className = 'wordlens-popup-target';
     if (this.plugin.settings.showTransliteration && result.transliteration) {
@@ -793,11 +814,9 @@ class Popup {
       ph.textContent = result.transliteration;
       target.appendChild(ph);
     }
-    const txt = document.createElement('div');
-    txt.textContent = result.targetText;
-    target.appendChild(txt);
+    target.appendChild(document.createTextNode(result.targetText));
     el.appendChild(target);
-    // 词典区（一词多译）
+    // 4. 词典区（一词多译：词性 + 释义同行）
     const dict = result.dict;
     if (dict && this.plugin.settings.showDictionary) {
       const dictEl = document.createElement('div');
@@ -812,47 +831,29 @@ class Popup {
         for (const e of dict.entries) {
           const row = document.createElement('div');
           row.className = 'wordlens-popup-dict-row';
-          const pos = document.createElement('span');
-          pos.className = 'wordlens-popup-pos';
-          pos.textContent = e.pos;
-          const meaning = document.createElement('span');
-          meaning.className = 'wordlens-popup-meaning';
-          meaning.textContent = e.meaning;
-          row.appendChild(pos);
-          row.appendChild(meaning);
+          if (e.pos) {
+            const posEl = document.createElement('b');
+            posEl.className = 'wordlens-popup-pos';
+            posEl.textContent = e.pos;
+            row.appendChild(posEl);
+            row.appendChild(document.createTextNode(' '));
+          }
+          const termsEl = document.createElement('span');
+          termsEl.className = 'wordlens-popup-terms';
+          termsEl.textContent = e.meaning;
+          row.appendChild(termsEl);
           dictEl.appendChild(row);
         }
       }
       if (dictEl.childNodes.length) el.appendChild(dictEl);
     }
-    // 工具栏
-    const bar = document.createElement('div');
-    bar.className = 'wordlens-popup-bar';
-    const btnCopy = document.createElement('button');
-    btnCopy.className = 'wordlens-popup-btn';
-    btnCopy.textContent = s.copy;
-    btnCopy.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      try {
-        await navigator.clipboard.writeText(result.targetText);
-        new Notice(s.copied);
-      } catch (_) {}
-    });
-    const btnSpeak = document.createElement('button');
-    btnSpeak.className = 'wordlens-popup-btn';
-    btnSpeak.textContent = s.speak;
-    btnSpeak.addEventListener('click', (e) => {
-      e.stopPropagation();
-      try {
-        const u = new SpeechSynthesisUtterance(sourceText);
-        u.lang = result.sourceLang === 'zh' ? 'zh-CN' : result.sourceLang;
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(u);
-      } catch (_) {}
-    });
-    bar.appendChild(btnCopy);
-    bar.appendChild(btnSpeak);
-    el.appendChild(bar);
+    // 5. 检测语言（底部小字）
+    if (this.plugin.settings.showDetectedLang && result.sourceLang && result.sourceLang !== 'auto') {
+      const meta = document.createElement('div');
+      meta.className = 'wordlens-popup-meta';
+      meta.textContent = String(result.sourceLang).toUpperCase();
+      el.appendChild(meta);
+    }
     el.style.display = 'block';
     this.position(rect);
   }
@@ -927,18 +928,27 @@ class WordLensPlugin extends Plugin {
       },
     });
 
-    // —— 侧边栏图标 ——
-    this.addRibbonIcon('message-square', this.i18n().ribbonTrans, () => this.openTransView());
-    this.addRibbonIcon('book-open', this.i18n().ribbonVocab, () => this.openVocabView());
+    // —— 侧边栏图标（容错：个别 Obsidian 版本图标缺失不影响核心功能） ——
+    try {
+      this.addRibbonIcon('message-square', this.i18n().ribbonTrans, () => this.openTransView());
+      this.addRibbonIcon('book-open', this.i18n().ribbonVocab, () => this.openVocabView());
+    } catch (e) {
+      console.warn('[wordlens] ribbon icon failed:', e);
+    }
 
-    // —— 整页翻译按钮（阅读视图工具栏） ——
+    // —— 整页翻译按钮（阅读视图工具栏，容错：addAction 兼容低版本） ——
     const addPageBtn = () => {
-      this.app.workspace.getLeavesOfType('markdown').forEach((leaf) => {
-        const view = leaf.view;
-        if (!view || view._wlPageBtn) return;
-        if (!(Platform.isMobile ? this.settings.enablePageMobile : this.settings.enablePage)) return;
-        view._wlPageBtn = view.addAction('languages', this.i18n().togglePage, () => this.togglePageTranslate());
-      });
+      try {
+        this.app.workspace.getLeavesOfType('markdown').forEach((leaf) => {
+          const view = leaf.view;
+          if (!view || view._wlPageBtn) return;
+          if (!(Platform.isMobile ? this.settings.enablePageMobile : this.settings.enablePage)) return;
+          if (typeof view.addAction !== 'function') return; // 低版本 Obsidian 无此 API，跳过
+          view._wlPageBtn = view.addAction('languages', this.i18n().togglePage, () => this.togglePageTranslate());
+        });
+      } catch (e) {
+        console.warn('[wordlens] page button failed:', e);
+      }
     };
     addPageBtn();
     this.registerEvent(this.app.workspace.on('layout-change', addPageBtn));
