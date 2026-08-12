@@ -1125,6 +1125,7 @@ class WordLensPlugin extends Plugin {
       if (!this.selectionActive) this.popup.hide();
     });
     this.registerDomEvent(document, 'selectionchange', () => this.onSelectionChange());
+    this.registerDomEvent(document, 'mouseup', (e) => this.onMouseUp(e));
     this.registerDomEvent(document, 'keydown', (e) => {
       if (e.key === 'Escape') { this.popup.hide(); this.selectionActive = false; }
     });
@@ -1190,24 +1191,40 @@ class WordLensPlugin extends Plugin {
   }
 
   /* ---------- 划词 ---------- */
+  // selectionchange 只管理锁定：划词翻译由 mouseup 读取最终选择触发
   onSelectionChange() {
     if (!this.settings.enabled || !this.settings.enableSelection) return;
-    const s = this.i18n();
-    setTimeout(() => {
-      const sel = window.getSelection && window.getSelection();
-      if (!sel) return;
-      if (sel.isCollapsed) {
-        if (this.selectionActive) { this.popup.hide(); this.selectionActive = false; }
-        return;
+    const sel = window.getSelection && window.getSelection();
+    const hasSel = !!(sel && !sel.isCollapsed && sel.toString().trim());
+    if (hasSel) {
+      if (this.settings.restrictToNoteContent) {
+        const okAnchor = sel.anchorNode && inNoteContent(sel.anchorNode, this.settings.activeMode);
+        const okFocus = sel.focusNode && inNoteContent(sel.focusNode, this.settings.activeMode);
+        if (!okAnchor && !okFocus) return;
       }
-      const text = sel.toString().replace(/\s+/g, ' ').trim();
-      if (!text || text.length > 5000) return;
-      if (this.settings.restrictToNoteContent && sel.anchorNode && !inNoteContent(sel.anchorNode, this.settings.activeMode)) return;
       this.selectionActive = true;
-      let rect = null;
-      try { rect = sel.getRangeAt(0).getBoundingClientRect(); } catch (_) { rect = null; }
-      this.translate(text, this.settings.selectionEngine, rect);
-    }, 200);
+    } else if (this.selectionActive) {
+      this.selectionActive = false;
+      this.popup.hide();
+    }
+  }
+
+  onMouseUp(e) {
+    if (!this.settings.enabled || !this.settings.enableSelection) return;
+    if (this.popup.isOwn(e.target)) return;
+    const sel = window.getSelection && window.getSelection();
+    if (!sel || sel.isCollapsed) return;
+    const text = sel.toString().replace(/\s+/g, ' ').trim();
+    if (!text || text.length > 5000) return;
+    if (this.settings.restrictToNoteContent) {
+      const okAnchor = sel.anchorNode && inNoteContent(sel.anchorNode, this.settings.activeMode);
+      const okFocus = sel.focusNode && inNoteContent(sel.focusNode, this.settings.activeMode);
+      if (!okAnchor && !okFocus) return;
+    }
+    this.selectionActive = true;
+    let rect = null;
+    try { rect = sel.getRangeAt(0).getBoundingClientRect(); } catch (_) { rect = null; }
+    this.translate(text, this.settings.selectionEngine, rect);
   }
 
   async translateSelection() {
