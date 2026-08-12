@@ -935,7 +935,9 @@ class Popup {
     bar.appendChild(btnCopy);
     bar.appendChild(btnSave);
     el.appendChild(bar);
-    // 2. 译文 + 音标（放上方，一眼看到译文）
+    // 2-3. 译文 + 词头（句子 → 译文置顶；单词/短语 → 原文在上）
+    const words = sourceText.split(/\s+/).filter(Boolean).length;
+    const isSentence = words > 3 || sourceText.length > 40;
     const target = document.createElement('div');
     target.className = 'wordlens-popup-target';
     if (this.plugin.settings.showTransliteration && result.transliteration) {
@@ -945,13 +947,18 @@ class Popup {
       target.appendChild(ph);
     }
     target.appendChild(document.createTextNode(result.targetText));
-    el.appendChild(target);
-    // 3. 词头（原文，放译文下方）
+    let headEl = null;
     if (this.plugin.settings.showSourceText) {
-      const head = document.createElement('div');
-      head.className = 'wordlens-popup-headword';
-      head.textContent = sourceText;
-      el.appendChild(head);
+      headEl = document.createElement('div');
+      headEl.className = 'wordlens-popup-headword';
+      headEl.textContent = sourceText;
+    }
+    if (isSentence) {
+      el.appendChild(target);
+      if (headEl) el.appendChild(headEl);
+    } else {
+      if (headEl) el.appendChild(headEl);
+      el.appendChild(target);
     }
     // 4. 词典区（一词多译：词性 + 释义同行）
     const dict = result.dict;
