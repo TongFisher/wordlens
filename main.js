@@ -645,9 +645,10 @@ class YoudaoEngine extends BaseEngine {
     const dict = await this.fetchDict(text, detected);
     return { targetText, sourceLang: detected, transliteration: data.transliteration ? data.transliteration[0] : '', dict };
   }
-  /** 有道免费词典接口：英汉 ec / 汉英 ce，返回多义项。 */
+  /** 有道免费词典接口：英汉 ec / 汉英 ce，返回多义项。仅对单词/短语（≤120 字符）查询，长文本跳过。 */
   static async fetchDict(q, lang) {
     try {
+      if (!q || q.length > 120) return null;
       const le = lang === 'zh' ? 'zh' : 'eng';
       const data = await httpJson(
         'GET',
@@ -1203,8 +1204,9 @@ class WordLensPlugin extends Plugin {
       if (!text || text.length > 5000) return;
       if (this.settings.restrictToNoteContent && sel.anchorNode && !inNoteContent(sel.anchorNode, this.settings.activeMode)) return;
       this.selectionActive = true;
-      const range = sel.getRangeAt(0);
-      this.translate(text, this.settings.selectionEngine, range.getBoundingClientRect());
+      let rect = null;
+      try { rect = sel.getRangeAt(0).getBoundingClientRect(); } catch (_) { rect = null; }
+      this.translate(text, this.settings.selectionEngine, rect);
     }, 200);
   }
 
@@ -1239,7 +1241,7 @@ class WordLensPlugin extends Plugin {
     this.popup.showLoading(rect); // 请求期间显示加载反馈
     const result = await engine.cls.translate(text, src, tgt, this.settings);
     if (seq !== this._reqSeq) return; // 已被更新的请求取代，丢弃过期结果
-    if (!result) return;
+    if (!result || !result.targetText) { this.popup.hide(); return; } // 失败不残留加载态
     // 跳过同语言 / 无变化
     if (this.settings.skipSameLanguage && result.sourceLang && result.sourceLang !== 'auto' && normLang(result.sourceLang, engineKey) === normLang(tgt, engineKey)) return;
     if (this.settings.skipIdenticalText && result.targetText === text) return;
