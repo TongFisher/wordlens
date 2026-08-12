@@ -22,6 +22,12 @@ WordLens 是完全独立开发的 Obsidian 插件：界面全中文、配置简�
 
 🤯 **不止划词**：整页翻译（一键全文 + 逐段还原）、生词本、真人发音、一键复制…… 长文突击和日常积累都照顾到了。
 
+🧩 **词根词缀拆解**：查 `unbelievable`，直接拆给你看——`un-（不） + believ（词根） + -able（可…的）`。有道词典词根优先，内置规则兜底，都**不耗翻译额度**。背单词事半功倍，你细品 💡。
+
+📌 **单词本笔记**：弹窗右上角一键 📌，把词存进**你自己的 md 文件**（路径在设置里点「选择文件…」挑，还能选只存词或带译文），复习不愁，越攒越厚 📚。
+
+🎨 **智能布局**：查单词照旧原文在上；划**句子/段落**时自动把**译文放大置顶**，一眼看明白，不用在原文里找译文 🥹。
+
 ⭐ **全中文界面**：设置项明明白白，第一次用也能秒上手。
 
 > 说句实在的，做它的初衷很简单：市面上的翻译插件要么英文界面、要么单引擎，中文用户用着不够爽。所以自己造了一个——全中文、多引擎、带免费词典，开箱即用。
@@ -33,10 +39,12 @@ WordLens 是完全独立开发的 Obsidian 插件：界面全中文、配置简�
 
 🛠️ **怎么用 & 配置**
 
-- 在笔记里**划词或悬停** → 翻译弹窗自动出现
+- 在笔记里**划词或悬停** → 翻译弹窗自动出现（单词/短语/整句/段落都支持）
+- 弹窗右上角：🔊 朗读 / 📋 复制译文 / 📌 存进单词本
 - 设置里挑引擎、填密钥（只用哪个填哪个，没填的不耗额度）
 - 划中文不弹框？检查「跳过同语言翻译」开关
 - 整页翻译走云端 API，注意用量；划词翻译消耗极小 😏
+- 词典、音标、词根词缀、一词多译全走有道免费接口，**零额度消耗**
 
 📊 **引擎配置速查**
 
@@ -65,10 +73,13 @@ WordLens 是完全独立开发的插件，采用 **MIT License** 开源，免费
 
 ### Features
 
-- **Hover & select translation** with a cursor-following popup
+- **Hover & select translation** with a cursor-following popup — words, phrases, sentences and paragraphs all supported
 - **Multi-translation (free dictionary)**: one word → many senses with phonetics. Powered by Youdao's free dictionary API, so it **consumes zero translation API quota**
 - **Bidirectional smart mode**: Chinese → foreign language, foreign → Chinese, auto-detected — no manual language switching
 - **7 translation sources**: Youdao, Baidu, Tencent Cloud, Alibaba Cloud, Bing, Google, Google GTX. Bing and Youdao work **out of the box with no API key**
+- **Morphology breakdown**: prefix / root / suffix with meanings (e.g. `un-` + `believ` + `-able`) — Youdao roots first, built-in rules as fallback, all free
+- **Word note**: one-click 📌 in the popup appends the word to your own md file — pick the file via a file browser, save word-only or with translation
+- **Smart layout**: sentences & paragraphs show a **large translation on top**; single words keep the classic original-first order
 - **Full-page translation** with per-paragraph restore
 - **Wordbook, TTS pronunciation, one-click copy**
 - **Full Chinese UI** (switchable to English)
