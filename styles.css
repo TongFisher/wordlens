@@ -76,6 +76,24 @@
   word-break: break-word;
 }
 
+/* 句子模式：译文大号醒目 */
+.wordlens-popup-target-lg {
+  font-size: 1.15em;
+  font-weight: 650;
+  line-height: 1.5;
+  color: var(--text-normal, #eeeeee);
+  word-break: break-word;
+}
+
+/* 句子模式：原文缩小降级为次要信息 */
+.wordlens-popup-src-sm {
+  font-size: 0.9em;
+  font-weight: 400;
+  color: var(--text-muted, #aaaaaa);
+  margin: 4px 0 0;
+  word-break: break-word;
+}
+
 /* 音标 */
 .wordlens-popup-phonetic {
   margin-top: 4px;

@@ -954,6 +954,9 @@ class Popup {
       headEl.textContent = sourceText;
     }
     if (isSentence) {
+      // 句子模式：译文大号醒目，原文缩小降级
+      target.classList.add('wordlens-popup-target-lg');
+      if (headEl) headEl.classList.add('wordlens-popup-src-sm');
       el.appendChild(target);
       if (headEl) el.appendChild(headEl);
     } else {
