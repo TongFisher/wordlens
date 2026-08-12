@@ -475,10 +475,13 @@ function extractAtPoint(x, y, mode) {
 
 /** 判断节点是否位于笔记正文（可选编辑/阅读限定）。 */
 function inNoteContent(node, activeMode) {
-  if (!node || !node.closest) return false;
-  if (activeMode === 'edit') return !!node.closest('.markdown-source-view, .cm-content, .markdown-embed');
-  if (activeMode === 'reading') return !!node.closest('.markdown-reading-view, .markdown-embed');
-  return !!node.closest('.markdown-source-view, .markdown-reading-view, .cm-content, .markdown-embed');
+  if (!node) return false;
+  // 划词时 anchorNode/focusNode 是文本节点，文本节点没有 closest()，先取父元素
+  const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : (node.closest ? node : null);
+  if (!el || !el.closest) return false;
+  if (activeMode === 'edit') return !!el.closest('.markdown-source-view, .cm-content, .markdown-embed');
+  if (activeMode === 'reading') return !!el.closest('.markdown-reading-view, .markdown-embed');
+  return !!el.closest('.markdown-source-view, .markdown-reading-view, .cm-content, .markdown-embed');
 }
 
 /** 是否在弹窗自身内部。 */
