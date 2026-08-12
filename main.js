@@ -935,14 +935,7 @@ class Popup {
     bar.appendChild(btnCopy);
     bar.appendChild(btnSave);
     el.appendChild(bar);
-    // 2. 词头（大号原文）
-    if (this.plugin.settings.showSourceText) {
-      const head = document.createElement('div');
-      head.className = 'wordlens-popup-headword';
-      head.textContent = sourceText;
-      el.appendChild(head);
-    }
-    // 3. 译文 + 音标
+    // 2. 译文 + 音标（放上方，一眼看到译文）
     const target = document.createElement('div');
     target.className = 'wordlens-popup-target';
     if (this.plugin.settings.showTransliteration && result.transliteration) {
@@ -953,6 +946,13 @@ class Popup {
     }
     target.appendChild(document.createTextNode(result.targetText));
     el.appendChild(target);
+    // 3. 词头（原文，放译文下方）
+    if (this.plugin.settings.showSourceText) {
+      const head = document.createElement('div');
+      head.className = 'wordlens-popup-headword';
+      head.textContent = sourceText;
+      el.appendChild(head);
+    }
     // 4. 词典区（一词多译：词性 + 释义同行）
     const dict = result.dict;
     if (dict && this.plugin.settings.showDictionary) {
