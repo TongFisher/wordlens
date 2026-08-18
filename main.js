@@ -1299,7 +1299,7 @@ class WordLensPlugin extends Plugin {
     this.vocabSave();
   }
 
-  /* ---------- 单词本笔记（弹窗 📌 按钮 → 追加到 md 文件） ---------- */
+  /* ---------- 单词本笔记（弹窗 📌 按钮 → 追加到 md 文件，支持单词与整句/段落） ---------- */
   async saveWordToNote(word, translation) {
     const s = this.i18n();
     try {
@@ -1309,11 +1309,22 @@ class WordLensPlugin extends Plugin {
       if (!(await adapter.exists(filePath))) {
         await adapter.write(filePath, `# 单词本\n\n> 由 WordLens 划词收藏\n\n`);
       }
-      const line = this.settings.wordNoteIncludeTranslation && translation
-        ? `- **${word}** — ${translation}\n`
-        : `- **${word}**\n`;
+      // 规范化：压平换行/空白、转义 Markdown 特殊字符（防止句子破坏列表格式）、截断超长
+      const clean = (t) => String(t || '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .replace(/([*_`[\]])/g, '\\$1');
+      const wordClean = clean(word);
+      const wordShow = wordClean.length > 200 ? wordClean.slice(0, 200) + '…' : wordClean;
+      let line = `- **${wordShow}**`;
+      if (this.settings.wordNoteIncludeTranslation && translation) {
+        const tr = clean(translation);
+        const trShow = tr.length > 300 ? tr.slice(0, 300) + '…' : tr;
+        line += ` — ${trShow}`;
+      }
+      line += '\n';
       await adapter.append(filePath, line);
-      new Notice(s.saveWordDone(word, filePath));
+      new Notice(s.saveWordDone(wordShow, filePath));
     } catch (e) {
       new Notice(s.saveWordFailed + (e && e.message ? e.message : e));
       console.warn('[wordlens] save word note failed:', e);
