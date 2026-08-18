@@ -1306,6 +1306,12 @@ class WordLensPlugin extends Plugin {
       const raw = (this.settings.wordNotePath || '').trim();
       const filePath = raw ? (raw.endsWith('.md') ? raw : raw + '.md') : '单词本.md';
       const adapter = this.app.vault.adapter;
+      // 确保父目录存在（Obsidian adapter 不会自动创建目录，否则写入静默失败）
+      const slashIdx = filePath.lastIndexOf('/');
+      if (slashIdx > 0) {
+        const dir = filePath.slice(0, slashIdx);
+        if (!(await adapter.exists(dir))) await this.app.vault.createFolder(dir);
+      }
       if (!(await adapter.exists(filePath))) {
         await adapter.write(filePath, `# 单词本\n\n> 由 WordLens 划词收藏\n\n`);
       }
