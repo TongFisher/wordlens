@@ -10,9 +10,9 @@ const crypto = require('crypto');
  * 默认设置 —— 字段名与 v0.1 保持一致，旧 data.json 可直接沿用
  * ================================================================ */
 const DEFAULT_SETTINGS = {
-  mouseoverEngine: 'youdao',
-  selectionEngine: 'youdao',
-  pageEngine: 'youdao',
+  mouseoverEngine: 'buddy',
+  selectionEngine: 'buddy',
+  pageEngine: 'buddy',
   sourceLang: 'auto',
   targetLang: 'zh',
   // 方向模式：fixed = 固定用 sourceLang/targetLang；
@@ -51,6 +51,10 @@ const DEFAULT_SETTINGS = {
   tencentSecretKey: '',
   aliyunAccessKeyId: '',
   aliyunAccessKeySecret: '',
+  // Buddy2API 本地聚合网关（OpenAI 兼容）：loomy GLM 等，免官方翻译额度
+  buddyBaseUrl: 'http://127.0.0.1:8787/v1',
+  buddyApiKey: '',
+  buddyModel: 'glm-flash',
 };
 
 /* ================================================================
@@ -151,7 +155,7 @@ const I18N = {
     engineHover: '悬停引擎',
     engineSelection: '划词引擎',
     enginePage: '整页引擎',
-    engineDesc: '有道的词典增强（一词多译）最完整，推荐优先使用。',
+    engineDesc: '默认使用本地 Buddy2API 网关（loomy GLM 等），免官方翻译额度；有道词典增强仍可在下拉中切换。',
     youdaoKey: '有道智云 · 应用 ID',
     youdaoSecret: '有道智云 · 应用密钥',
     baiduKey: '百度翻译 · App ID',
@@ -160,6 +164,12 @@ const I18N = {
     tencentSecret: '腾讯云 · SecretKey',
     aliyunKey: '阿里云 · AccessKey ID',
     aliyunSecret: '阿里云 · AccessKey Secret',
+    buddyBaseUrl: 'Buddy2API · 端点地址',
+    buddyApiKey: 'Buddy2API · API Key',
+    buddyModel: 'Buddy2API · 模型名',
+    buddyBaseUrlDesc: '默认 http://127.0.0.1:8787/v1（Buddy2API 网页 Settings 可复制）。',
+    buddyApiKeyDesc: '在 Buddy2API 网页「API Keys」创建；未填则翻译不生效。',
+    buddyModelDesc: '默认 glm-flash。常用：glm-flash / glm-5.2 / glm-5.1 / auto / kimi-k2.7 / deepseek-v4-flash / deepseek-v4-pro（以 Buddy2API 网页显示的为准）。',
     showSourceText: '显示原文',
     showDetectedLang: '显示检测语言',
     showDictionary: '显示词典释义',
@@ -269,7 +279,7 @@ const I18N = {
     engineHover: 'Hover engine',
     engineSelection: 'Selection engine',
     enginePage: 'Page engine',
-    engineDesc: 'Youdao provides the richest dictionary (multi-translation). Recommended.',
+    engineDesc: 'Default: local Buddy2API gateway (loomy GLM, etc.) — no official translation quota. Youdao dictionary still selectable.',
     youdaoKey: 'Youdao · App ID',
     youdaoSecret: 'Youdao · App Secret',
     baiduKey: 'Baidu · App ID',
@@ -278,6 +288,12 @@ const I18N = {
     tencentSecret: 'Tencent · SecretKey',
     aliyunKey: 'Aliyun · AccessKey ID',
     aliyunSecret: 'Aliyun · AccessKey Secret',
+    buddyBaseUrl: 'Buddy2API · Base URL',
+    buddyApiKey: 'Buddy2API · API Key',
+    buddyModel: 'Buddy2API · Model',
+    buddyBaseUrlDesc: 'Default http://127.0.0.1:8787/v1 (copy from Buddy2API web UI Settings).',
+    buddyApiKeyDesc: 'Create in Buddy2API web UI "API Keys". Translation fails if empty.',
+    buddyModelDesc: 'Default glm-flash. Common: glm-flash / glm-5.2 / glm-5.1 / auto / kimi-k2.7 / deepseek-v4-flash / deepseek-v4-pro (use what Buddy2API shows).',
     showSourceText: 'Show original text',
     showDetectedLang: 'Show detected language',
     showDictionary: 'Show dictionary entries',
@@ -342,6 +358,16 @@ function detectLang(text) {
   if (looksChinese(text)) return 'zh';
   if (looksJapanese(text)) return 'ja';
   return 'en';
+}
+
+/** 把语言代码转成自然语言名，用于构造 AI 翻译提示词。 */
+function langName(code) {
+  const m = {
+    'zh': '中文', 'zh-CN': '中文', 'zh-CHS': '中文', 'zh-TW': '中文', 'zh-Hant': '中文',
+    'en': 'English', 'ja': '日语', 'ko': '韩语', 'fr': '法语', 'de': '德语',
+    'es': '西班牙语', 'ru': '俄语', 'pt': '葡萄牙语', 'it': '意大利语',
+  };
+  return m[code] || code || '中文';
 }
 
 /** 规范化语言代码（各引擎方言） */
@@ -793,6 +819,42 @@ class AliyunEngine extends BaseEngine {
   }
 }
 
+/** Buddy2API 本地聚合网关（OpenAI 兼容 /chat/completions）：loomy GLM 等，免官方翻译额度。
+ *  端点默认 http://127.0.0.1:8787/v1，API Key 在 Buddy2API 网页「API Keys」中创建。 */
+class Buddy2ApiEngine extends BaseEngine {
+  static key = 'buddy';
+  static async request(text, src, tgt, settings) {
+    const base = (settings.buddyBaseUrl || 'http://127.0.0.1:8787/v1').trim().replace(/\/+$/, '');
+    const key = (settings.buddyApiKey || '').trim();
+    const model = (settings.buddyModel || 'glm-flash').trim() || 'glm-flash';
+    if (!key) return null; // 未填 Key 时交回 null，由上层决定（弹窗静默隐藏）
+    const tgtName = langName(tgt);
+    const sys = `You are a professional translator. Translate the user's text into ${tgtName}. ` +
+      `Output ONLY the translated text — no commentary, no quotes, no code fences, no prefixes like "Translation:". ` +
+      `If the text is already in ${tgtName}, or is a proper noun / code / symbol that should stay unchanged, output it as-is. ` +
+      `Preserve line breaks and paragraph structure where reasonable.`;
+    const data = await httpJson('POST', `${base}/chat/completions`, {
+      headers: {
+        'Authorization': `Bearer ${key}`,
+        'Content-Type': 'application/json',
+      },
+      json: {
+        model,
+        messages: [
+          { role: 'system', content: sys },
+          { role: 'user', content: text },
+        ],
+        temperature: 0.3,
+        stream: false,
+      },
+    });
+    if (!data || !data.choices || !data.choices[0] || !data.choices[0].message) return null;
+    const targetText = String(data.choices[0].message.content || '').trim();
+    if (!targetText) return null;
+    return { targetText, sourceLang: src };
+  }
+}
+
 const ENGINES = {
   google: { label: 'Google（谷歌）', cls: GoogleEngine },
   googleGTX: { label: 'Google GTX（免密钥）', cls: GoogleGTXEngine },
@@ -801,10 +863,11 @@ const ENGINES = {
   baidu: { label: '百度翻译', cls: BaiduEngine },
   tencent: { label: '腾讯云翻译', cls: TencentEngine },
   aliyun: { label: '阿里云翻译', cls: AliyunEngine },
+  buddy: { label: 'Buddy2API（loomy GLM）', cls: Buddy2ApiEngine },
 };
 
 function engineNeedsKey(key) {
-  return ['youdao', 'baidu', 'tencent', 'aliyun'].includes(key);
+  return ['youdao', 'baidu', 'tencent', 'aliyun', 'buddy'].includes(key);
 }
 
 /* ================================================================
@@ -1569,6 +1632,18 @@ class WordLensSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName(s.aliyunSecret)
       .addText((t) => t.setPlaceholder('…').setValue(this.plugin.settings.aliyunAccessKeySecret)
         .onChange(async (v) => { this.plugin.settings.aliyunAccessKeySecret = v.trim(); await this.plugin.saveSettings(); }));
+
+    /* —— Buddy2API（本地聚合网关 / OpenAI 兼容） —— */
+    containerEl.createEl('h4', { text: 'Buddy2API（loomy GLM 等，免官方翻译额度）' });
+    new Setting(containerEl).setName(s.buddyBaseUrl).setDesc(s.buddyBaseUrlDesc)
+      .addText((t) => t.setPlaceholder('http://127.0.0.1:8787/v1').setValue(this.plugin.settings.buddyBaseUrl)
+        .onChange(async (v) => { this.plugin.settings.buddyBaseUrl = v.trim(); await this.plugin.saveSettings(); }));
+    new Setting(containerEl).setName(s.buddyApiKey).setDesc(s.buddyApiKeyDesc)
+      .addText((t) => t.setPlaceholder('sk-cb-…').setValue(this.plugin.settings.buddyApiKey)
+        .onChange(async (v) => { this.plugin.settings.buddyApiKey = v.trim(); await this.plugin.saveSettings(); }));
+    new Setting(containerEl).setName(s.buddyModel).setDesc(s.buddyModelDesc)
+      .addText((t) => t.setPlaceholder('glm-flash').setValue(this.plugin.settings.buddyModel)
+        .onChange(async (v) => { this.plugin.settings.buddyModel = v.trim(); await this.plugin.saveSettings(); }));
 
     /* —— 弹窗内容 —— */
     containerEl.createEl('h3', { text: s.secTooltip });

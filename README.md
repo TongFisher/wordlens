@@ -18,7 +18,7 @@ WordLens 是完全独立开发的 Obsidian 插件：界面全中文、配置简�
 
 ⚡️ **双向智能识别**：划中文自动翻外文，划外文自动翻中文，语言方向自己判断，不用手动切来切去。脑子不用动，体验直接拉满 ✅。
 
-🚀 **7 路翻译源随便切**：有道、百度、腾讯云、阿里云、Bing、Google、Google GTX 全给你备齐。重点来了——**Bing 和有道免密钥开箱即用**，国内直连不翻车，装上就能用 🔥。
+🚀 **8 路翻译源随便切**：有道、百度、腾讯云、阿里云、Bing、Google、Google GTX 全给你备齐，还内置 **Buddy2API 本地 AI 网关**（loomy GLM 等）**免官方翻译额度**。重点来了——**Bing 和有道免密钥开箱即用**，国内直连不翻车，装上就能用 🔥。
 
 🤯 **不止划词**：整页翻译（一键全文 + 逐段还原）、生词本、真人发音、一键复制…… 长文突击和日常积累都照顾到了。
 
@@ -56,6 +56,7 @@ WordLens 是完全独立开发的 Obsidian 插件：界面全中文、配置简�
 | 阿里云翻译 | AccessKey ID + Secret | 有 | 机器翻译 |
 | Bing | 无需 | 免费 | 开箱即用 |
 | Google / Google GTX | 无需 | 免费 | 需能访问 Google |
+| Buddy2API | 网关 API Key | 取决于上游（loomy GLM 免额度） | 本地聚合网关（OpenAI 兼容），默认 `http://127.0.0.1:8787/v1`，模型默认 `glm-flash` |
 
 > 一词多译、音标、短语释义来自有道免费词典接口，**不消耗任何翻译 API 额度**。
 
@@ -76,7 +77,7 @@ WordLens 是完全独立开发的插件，采用 **MIT License** 开源，免费
 - **Hover & select translation** with a cursor-following popup — words, phrases, sentences and paragraphs all supported
 - **Multi-translation (free dictionary)**: one word → many senses with phonetics. Powered by Youdao's free dictionary API, so it **consumes zero translation API quota**
 - **Bidirectional smart mode**: Chinese → foreign language, foreign → Chinese, auto-detected — no manual language switching
-- **7 translation sources**: Youdao, Baidu, Tencent Cloud, Alibaba Cloud, Bing, Google, Google GTX. Bing and Youdao work **out of the box with no API key**
+- **8 translation sources**: Youdao, Baidu, Tencent Cloud, Alibaba Cloud, Bing, Google, Google GTX, and a built-in **Buddy2API local AI gateway** (loomy GLM, etc.) that **uses no official translation quota**. Bing and Youdao work **out of the box with no API key**
 - **Morphology breakdown**: prefix / root / suffix with meanings (e.g. `un-` + `believ` + `-able`) — Youdao roots first, built-in rules as fallback, all free
 - **Word note**: one-click 📌 in the popup appends the word to your own md file — pick the file via a file browser, save word-only or with translation
 - **Smart layout**: sentences & paragraphs show a **large translation on top**; single words keep the classic original-first order
@@ -110,6 +111,7 @@ WordLens is an independent implementation, released under the MIT License.
 | Alibaba Cloud | AccessKey ID + Secret | Free tier | Machine Translation |
 | Bing | None | Free | Works out of the box |
 | Google / Google GTX | None | Free | Requires Google access (overseas) |
+| Buddy2API | Gateway API Key | Depends on upstream (loomy GLM free) | Local OpenAI-compatible gateway, default `http://127.0.0.1:8787/v1`, model `glm-flash` |
 
 > The dictionary (multi-translation, phonetics, phrase glosses) comes from Youdao's free API and **uses no translation API quota**.
 
